@@ -21,9 +21,6 @@ export default function ProgressScreen() {
 
   const { level, node: currentNode, lessonsComplete, lessonsTotal } = getCurrentLevel(state.completedLessonIds);
 
-  const completedNodes = TRACK_NODES.filter(n =>
-    n.lessons.every(l => state.completedLessonIds.includes(l.id))
-  ).length;
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
   const webBottomPad = Platform.OS === 'web' ? 34 : 0;
@@ -77,28 +74,6 @@ export default function ProgressScreen() {
               ]}
             />
           </View>
-        </View>
-
-        {/* Stats grid */}
-        <View style={styles.statsGrid}>
-          {[
-            { icon: 'flash-outline' as const, label: 'Level', value: level, total: TRACK_NODES.length },
-            { icon: 'flag-outline' as const, label: 'Nodes', value: completedNodes, total: TRACK_NODES.length },
-            { icon: 'barbell-outline' as const, label: 'Workouts', value: state.workoutHistory.length, total: null },
-          ].map((s, i) => (
-            <View key={i} style={[styles.statCard, { backgroundColor: colors.card }]}>
-              <Ionicons name={s.icon} size={22} color={colors.primary} />
-              <Text style={[styles.statValue, { color: colors.foreground }]}>
-                {s.value}
-                {s.total !== null && (
-                  <Text style={[styles.statDenom, { color: colors.mutedForeground }]}>
-                    /{s.total}
-                  </Text>
-                )}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
-            </View>
-          ))}
         </View>
 
         {/* Node progress */}
@@ -240,30 +215,6 @@ const styles = StyleSheet.create({
   stageFill: {
     height: '100%',
     borderRadius: 3,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 24,
-    fontFamily: 'Inter_700Bold',
-  },
-  statDenom: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_500Medium',
-    textAlign: 'center',
   },
   sectionTitle: {
     fontSize: 18,
