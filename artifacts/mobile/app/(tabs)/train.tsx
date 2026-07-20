@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ function isToday(dateStr: string): boolean {
 export default function TrainScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state } = useApp();
+  const { state, completeLesson } = useApp();
 
   const next = getNextLesson(state.completedLessonIds);
   const completedToday =
@@ -25,6 +25,25 @@ export default function TrainScreen() {
     if (!next) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     router.push(`/workout/${next.lesson.id}`);
+  };
+
+  const handleSkip = () => {
+    if (!next) return;
+    Alert.alert(
+      'Skip this workout?',
+      'It will be marked as complete and you\'ll move to the next one.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Skip',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            completeLesson(next.lesson.id);
+          },
+        },
+      ]
+    );
   };
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
@@ -131,18 +150,25 @@ export default function TrainScreen() {
             </Text>
           </View>
         ) : (
-          <Pressable
-            style={({ pressed }) => [
-              styles.startBtn,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-            onPress={handleStart}
-          >
-            <Ionicons name="play" size={20} color={colors.primaryForeground} />
-            <Text style={[styles.startBtnText, { color: colors.primaryForeground }]}>
-              Start Training
-            </Text>
-          </Pressable>
+          <>
+            <Pressable
+              style={({ pressed }) => [
+                styles.startBtn,
+                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+              ]}
+              onPress={handleStart}
+            >
+              <Ionicons name="play" size={20} color={colors.primaryForeground} />
+              <Text style={[styles.startBtnText, { color: colors.primaryForeground }]}>
+                Start Training
+              </Text>
+            </Pressable>
+            <Pressable style={styles.skipLink} onPress={handleSkip}>
+              <Text style={[styles.skipLinkText, { color: colors.mutedForeground }]}>
+                Too easy — skip
+              </Text>
+            </Pressable>
+          </>
         )}
       </View>
     </View>
@@ -271,6 +297,14 @@ const styles = StyleSheet.create({
   startBtnText: {
     fontSize: 17,
     fontFamily: 'Inter_700Bold',
+  },
+  skipLink: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  skipLinkText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
   },
   success: {},
 });
