@@ -55,9 +55,9 @@ export const TRACK_NODES: TrackNode[] = [
         title: 'Strength Surge',
         xpReward: 150,
         exercises: [
-          { id: 'f3e1', name: 'Pull-ups', sets: 4, reps: 10, description: 'Full range, controlled descent. This is your baseline. Own it.' },
-          { id: 'f3e2', name: 'Chin-ups', sets: 2, reps: 8, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats powerfully.' },
-          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, description: 'Critical for muscle-up prep. Engrain this movement.' },
+          { id: 'f3e1', name: 'Pull-ups', sets: 3, reps: 6, description: 'Full range, controlled descent. Stop 2–3 reps before failure — quality over quantity.' },
+          { id: 'f3e2', name: 'Chin-ups', sets: 2, reps: 6, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats powerfully.' },
+          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 8, description: 'Critical for muscle-up prep. Arms stay straight — pure shoulder blade movement.' },
         ],
       },
       {
@@ -65,7 +65,7 @@ export const TRACK_NODES: TrackNode[] = [
         title: 'Max Strength',
         xpReward: 150,
         exercises: [
-          { id: 'f4e1', name: 'Pull-ups', sets: 5, reps: 10, description: 'High volume. Rest 2 full minutes between sets.' },
+          { id: 'f4e1', name: 'Pull-ups', sets: 4, reps: 8, description: 'Building volume gradually. Rest 90 seconds between sets — full recovery matters here.' },
           { id: 'f4e2', name: 'Hollow Body Hold', sets: 3, reps: '30s', description: 'Body tension is the bridge between pull and push in a muscle-up.' },
           { id: 'f4e3', name: 'Dead Hang', sets: 3, reps: '45s', description: 'Iron grip. This transfers directly to muscle-up execution.' },
         ],
