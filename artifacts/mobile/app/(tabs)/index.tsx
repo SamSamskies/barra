@@ -172,7 +172,7 @@ export default function PathScreen() {
             {
               backgroundColor: colors.background,
               borderTopColor: colors.border,
-              paddingBottom: insets.bottom + webBottomPad + 8,
+              paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 8,
             },
           ]}
         >
