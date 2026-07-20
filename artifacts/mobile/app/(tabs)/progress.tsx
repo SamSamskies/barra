@@ -63,16 +63,16 @@ export default function ProgressScreen() {
           </View>
           <XPBar xp={state.xp} />
           <Text style={[styles.xpToNext, { color: colors.mutedForeground }]}>
-            {xpToNext.toLocaleString()} XP to Level {level + 1}
+            {xpToNext.toLocaleString()} XP to Level {level + 1} · earned from completed workouts
           </Text>
         </View>
 
         {/* Stats grid */}
         <View style={styles.statsGrid}>
           {[
-            { icon: 'barbell-outline' as const, label: 'Lessons', value: state.completedLessonIds.length, total: totalLessons },
+            { icon: 'map-outline' as const, label: 'Position', value: state.completedLessonIds.length, total: totalLessons },
             { icon: 'flag-outline' as const, label: 'Nodes', value: completedNodes, total: TRACK_NODES.length },
-            { icon: 'calendar-outline' as const, label: 'Workouts', value: state.workoutHistory.length, total: null },
+            { icon: 'barbell-outline' as const, label: 'Workouts done', value: state.workoutHistory.length, total: null },
           ].map((s, i) => (
             <View key={i} style={[styles.statCard, { backgroundColor: colors.card }]}>
               <Ionicons name={s.icon} size={22} color={colors.primary} />
