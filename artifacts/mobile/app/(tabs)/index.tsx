@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { PathNode } from '@/components/PathNode';
-import { XPBar } from '@/components/XPBar';
 import { StreakBadge } from '@/components/StreakBadge';
 import {
   TRACK_NODES,
@@ -74,7 +73,6 @@ export default function PathScreen() {
           </Text>
           <StreakBadge streak={state.streak} />
         </View>
-        <XPBar xp={state.xp} compact />
       </View>
 
       {/* Scrollable path */}
@@ -204,7 +202,7 @@ export default function PathScreen() {
                       {lesson.title}
                     </Text>
                     <Text style={[styles.modalLessonDetail, { color: colors.mutedForeground }]}>
-                      {lesson.exercises.length} exercises · {lesson.xpReward} XP
+                      {lesson.exercises.length} exercises
                     </Text>
                   </View>
                   <Ionicons name="refresh-outline" size={18} color={colors.mutedForeground} />

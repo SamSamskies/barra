@@ -5,17 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-import { getLevelInfo } from '@/constants/track';
+import { getCurrentLevel } from '@/constants/track';
 
 export default function CompleteScreen() {
-  const { xp: xpParam, lessonTitle, skippedSets: skippedParam } = useLocalSearchParams<{ xp: string; lessonTitle: string; skippedSets: string }>();
+  const { lessonTitle, skippedSets: skippedParam } = useLocalSearchParams<{ lessonTitle: string; skippedSets: string }>();
   const colors = useColors();
   const { state } = useApp();
 
-  const xpEarned = parseInt(xpParam ?? '0', 10);
   const skippedSets = parseInt(skippedParam ?? '0', 10);
   const hadSkips = skippedSets > 0;
-  const { level } = getLevelInfo(state.xp);
+  const { level } = getCurrentLevel(state.completedLessonIds);
 
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -85,22 +84,11 @@ export default function CompleteScreen() {
             </View>
           )}
 
-          {/* XP pill */}
-          <View
-            style={[
-              styles.xpPill,
-              { backgroundColor: colors.card, borderColor: colors.accent + '55' },
-            ]}
-          >
-            <Text style={[styles.xpLabel, { color: colors.mutedForeground }]}>XP EARNED</Text>
-            <Text style={[styles.xpAmount, { color: colors.accent }]}>+{xpEarned}</Text>
-          </View>
-
           {/* Stats */}
           <Animated.View style={[styles.statsRow, { opacity: statsOpacity }]}>
             {[
               { icon: 'flame' as const, label: 'streak', value: String(state.streak) },
-              { icon: 'star' as const, label: 'total XP', value: state.xp.toLocaleString() },
+              { icon: 'barbell-outline' as const, label: 'workouts', value: String(state.workoutHistory.length) },
               { icon: 'medal' as const, label: 'level', value: String(level) },
             ].map((s, i) => (
               <View key={i} style={[styles.statBox, { backgroundColor: colors.card }]}>

@@ -4,9 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-import { XPBar } from '@/components/XPBar';
 import { StreakBadge } from '@/components/StreakBadge';
-import { TRACK_NODES, getLevelInfo } from '@/constants/track';
+import { TRACK_NODES, getCurrentLevel } from '@/constants/track';
 
 function lessonIdToLabel(id: string): string {
   return id
@@ -20,14 +19,11 @@ export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
   const { state } = useApp();
 
-  const { level, nextXP } = getLevelInfo(state.xp);
-  const xpToNext = nextXP - state.xp;
+  const { level, node: currentNode, lessonsComplete, lessonsTotal } = getCurrentLevel(state.completedLessonIds);
 
   const completedNodes = TRACK_NODES.filter(n =>
     n.lessons.every(l => state.completedLessonIds.includes(l.id))
   ).length;
-
-  const totalLessons = TRACK_NODES.reduce((sum, n) => sum + n.lessons.length, 0);
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
   const webBottomPad = Platform.OS === 'web' ? 34 : 0;
@@ -51,28 +47,44 @@ export default function ProgressScreen() {
         <View
           style={[
             styles.levelCard,
-            { backgroundColor: colors.card, borderColor: colors.primary + '44' },
+            { backgroundColor: colors.card, borderColor: currentNode.nodeColor + '44' },
           ]}
         >
           <View style={styles.levelTop}>
             <View>
               <Text style={[styles.levelLabel, { color: colors.mutedForeground }]}>LEVEL</Text>
-              <Text style={[styles.levelNum, { color: colors.primary }]}>{level}</Text>
+              <Text style={[styles.levelNum, { color: currentNode.nodeColor }]}>{level}</Text>
             </View>
             <StreakBadge streak={state.streak} size="large" />
           </View>
-          <XPBar xp={state.xp} />
-          <Text style={[styles.xpToNext, { color: colors.mutedForeground }]}>
-            {xpToNext.toLocaleString()} XP to Level {level + 1} · earned from completed workouts
-          </Text>
+          <View style={styles.stageRow}>
+            <View style={[styles.stageIcon, { backgroundColor: currentNode.nodeColor + '22' }]}>
+              <Ionicons name={currentNode.icon as any} size={16} color={currentNode.nodeColor} />
+            </View>
+            <Text style={[styles.stageName, { color: colors.foreground }]}>{currentNode.title}</Text>
+            <Text style={[styles.stageProg, { color: colors.mutedForeground }]}>
+              {lessonsComplete}/{lessonsTotal} lessons
+            </Text>
+          </View>
+          <View style={[styles.stageTrack, { backgroundColor: colors.muted }]}>
+            <View
+              style={[
+                styles.stageFill,
+                {
+                  backgroundColor: currentNode.nodeColor,
+                  width: `${lessonsTotal > 0 ? (lessonsComplete / lessonsTotal) * 100 : 0}%`,
+                },
+              ]}
+            />
+          </View>
         </View>
 
         {/* Stats grid */}
         <View style={styles.statsGrid}>
           {[
-            { icon: 'map-outline' as const, label: 'Position', value: state.completedLessonIds.length, total: totalLessons },
+            { icon: 'flash-outline' as const, label: 'Level', value: level, total: TRACK_NODES.length },
             { icon: 'flag-outline' as const, label: 'Nodes', value: completedNodes, total: TRACK_NODES.length },
-            { icon: 'barbell-outline' as const, label: 'Workouts done', value: state.workoutHistory.length, total: null },
+            { icon: 'barbell-outline' as const, label: 'Workouts', value: state.workoutHistory.length, total: null },
           ].map((s, i) => (
             <View key={i} style={[styles.statCard, { backgroundColor: colors.card }]}>
               <Ionicons name={s.icon} size={22} color={colors.primary} />
@@ -158,9 +170,6 @@ export default function ProgressScreen() {
                       })}
                     </Text>
                   </View>
-                  <Text style={[styles.historyXP, { color: colors.accent }]}>
-                    +{record.xpEarned}
-                  </Text>
                 </View>
               ))}
             </View>
@@ -202,9 +211,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     lineHeight: 60,
   },
-  xpToNext: {
+  stageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stageIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stageName: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  stageProg: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
+  },
+  stageTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  stageFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   statsGrid: {
     flexDirection: 'row',

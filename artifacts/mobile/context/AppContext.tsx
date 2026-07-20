@@ -1,18 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getLevelInfo, getStartingCompletedLessons } from '@/constants/track';
+import { getStartingCompletedLessons } from '@/constants/track';
 
 export interface WorkoutRecord {
   lessonId: string;
   completedAt: string;
-  xpEarned: number;
 }
 
 export interface AppState {
   onboardingComplete: boolean;
   initialPullUps: number;
-  xp: number;
-  level: number;
   streak: number;
   lastWorkoutDate: string | null;
   completedLessonIds: string[];
@@ -23,7 +20,7 @@ export interface AppState {
 interface AppContextType {
   state: AppState;
   completeOnboarding: (pullUps: number) => Promise<void>;
-  completeLesson: (lessonId: string, xpEarned: number) => Promise<void>;
+  completeLesson: (lessonId: string) => Promise<void>;
   resetProgress: () => Promise<void>;
 }
 
@@ -32,8 +29,6 @@ const STORAGE_KEY = '@calisthenx_v1';
 const defaultState: AppState = {
   onboardingComplete: false,
   initialPullUps: 0,
-  xp: 0,
-  level: 1,
   streak: 0,
   lastWorkoutDate: null,
   completedLessonIds: [],
@@ -96,12 +91,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [persist]);
 
-  const completeLesson = useCallback(async (lessonId: string, xpEarned: number) => {
+  const completeLesson = useCallback(async (lessonId: string) => {
     setState(prev => {
       if (prev.completedLessonIds.includes(lessonId)) return prev;
-
-      const newXp = prev.xp + xpEarned;
-      const { level } = getLevelInfo(newXp);
 
       const today = new Date().toISOString();
       let newStreak = prev.streak;
@@ -116,13 +108,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         newStreak = 1;
       }
 
-      const record: WorkoutRecord = { lessonId, completedAt: today, xpEarned };
+      const record: WorkoutRecord = { lessonId, completedAt: today };
 
       const next: AppState = {
         ...prev,
         completedLessonIds: [...prev.completedLessonIds, lessonId],
-        xp: newXp,
-        level,
         streak: newStreak,
         lastWorkoutDate: today,
         workoutHistory: [record, ...prev.workoutHistory].slice(0, 50),

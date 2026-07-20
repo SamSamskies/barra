@@ -110,13 +110,6 @@ export default function TrainScreen() {
           ))}
         </View>
 
-        {/* XP reward */}
-        <View style={[styles.xpBanner, { backgroundColor: colors.card, borderColor: colors.accent + '55' }]}>
-          <Ionicons name="star" size={18} color={colors.accent} />
-          <Text style={[styles.xpBannerText, { color: colors.foreground }]}>
-            +{lesson.xpReward} XP on completion
-          </Text>
-        </View>
       </ScrollView>
 
       {/* Fixed bottom CTA */}

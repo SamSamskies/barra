@@ -102,10 +102,10 @@ export default function WorkoutScreen() {
       setSetIdx(0);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await completeLesson(lesson.id, lesson.xpReward);
+      await completeLesson(lesson.id);
       router.replace({
         pathname: '/workout/complete',
-        params: { xp: String(lesson.xpReward), lessonTitle: lesson.title, skippedSets: String(skippedSets) },
+        params: { lessonTitle: lesson.title, skippedSets: String(skippedSets) },
       });
     }
   };
@@ -166,7 +166,6 @@ export default function WorkoutScreen() {
               {[
                 { icon: 'layers-outline' as const, label: `${lesson.exercises.length} exercises` },
                 { icon: 'repeat-outline' as const, label: `${totalSets} sets` },
-                { icon: 'star-outline' as const, label: `+${lesson.xpReward} XP`, accent: true },
               ].map((b, i) => (
                 <View
                   key={i}
@@ -175,7 +174,7 @@ export default function WorkoutScreen() {
                   <Ionicons
                     name={b.icon}
                     size={14}
-                    color={b.accent ? colors.accent : colors.primary}
+                    color={colors.primary}
                   />
                   <Text style={[styles.summaryText, { color: colors.foreground }]}>
                     {b.label}

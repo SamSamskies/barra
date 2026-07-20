@@ -11,7 +11,7 @@ export interface Lesson {
   id: string;
   title: string;
   exercises: Exercise[];
-  xpReward: number;
+  xpReward?: number;
 }
 
 export interface TrackNode {
@@ -351,21 +351,19 @@ export const getStartingCompletedLessons = (pullUps: number): string[] => {
   return ['foundation-1', 'foundation-2', 'foundation-3'];
 };
 
-export const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 1800, 2800, 4200, 6000, 8500, 12000];
-
-export const getLevelInfo = (xp: number): { level: number; progress: number; nextXP: number } => {
-  let level = 1;
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (xp >= LEVEL_THRESHOLDS[i]) {
-      level = i + 1;
-      break;
+export const getCurrentLevel = (completedIds: string[]): {
+  level: number;
+  node: TrackNode;
+  lessonsComplete: number;
+  lessonsTotal: number;
+} => {
+  for (let i = 0; i < TRACK_NODES.length; i++) {
+    const node = TRACK_NODES[i]!;
+    const done = node.lessons.filter(l => completedIds.includes(l.id)).length;
+    if (done < node.lessons.length) {
+      return { level: i + 1, node, lessonsComplete: done, lessonsTotal: node.lessons.length };
     }
   }
-
-  const currentThreshold = LEVEL_THRESHOLDS[level - 1] ?? 0;
-  const nextThreshold = LEVEL_THRESHOLDS[level] ?? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1]!;
-  const range = nextThreshold - currentThreshold;
-  const progress = range > 0 ? (xp - currentThreshold) / range : 1;
-
-  return { level, progress: Math.min(Math.max(progress, 0), 1), nextXP: nextThreshold };
+  const lastNode = TRACK_NODES[TRACK_NODES.length - 1]!;
+  return { level: TRACK_NODES.length, node: lastNode, lessonsComplete: lastNode.lessons.length, lessonsTotal: lastNode.lessons.length };
 };

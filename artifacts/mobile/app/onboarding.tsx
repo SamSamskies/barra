@@ -15,7 +15,7 @@ import { useApp } from '@/context/AppContext';
 
 const FEATURES = [
   { icon: 'map-outline' as const, text: 'Structured skill-tree progression' },
-  { icon: 'flash-outline' as const, text: 'Daily lessons with XP rewards' },
+  { icon: 'flash-outline' as const, text: 'Daily lessons with clear milestones' },
   { icon: 'trophy-outline' as const, text: '7 milestones to the muscle-up' },
 ];
 
@@ -66,7 +66,7 @@ export default function Onboarding() {
                 <Text style={{ color: colors.primary }}>Muscle-up</Text>
               </Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                A structured calisthenics system. Daily lessons, XP rewards, and real progress toward your goal.
+                A structured calisthenics system. Daily lessons, skill milestones, and real progress toward your goal.
               </Text>
             </View>
 
