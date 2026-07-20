@@ -33,42 +33,72 @@ export const TRACK_NODES: TrackNode[] = [
     lessons: [
       {
         id: 'foundation-1',
-        title: 'First Rep',
+        title: 'Ground Zero',
         xpReward: 100,
         exercises: [
-          { id: 'f1e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Full dead hang to chin over bar. Control the descent — 2 seconds down.' },
-          { id: 'f1e2', name: 'Dead Hang', sets: 3, reps: '20s', restSeconds: 45, description: 'Hang with arms fully extended. Retract your shoulder blades slightly.' },
-          { id: 'f1e3', name: 'Hollow Body Hold', sets: 2, reps: '20s', restSeconds: 45, description: 'Lie on back, press lower back to floor. Arms overhead, legs raised to 30 degrees.' },
+          { id: 'f1e1', name: 'Band-Assisted Pull-ups', sets: 3, reps: 5, restSeconds: 60, description: 'Loop a resistance band over the bar and step in. Focus on full range: dead hang all the way to chin above bar.' },
+          { id: 'f1e2', name: 'Negative Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: 'Jump or step to chin-over-bar. Lower yourself as slowly as possible — aim for 3–5 seconds down. This builds strength faster than positives alone.' },
+          { id: 'f1e3', name: 'Dead Hang', sets: 3, reps: '15s', restSeconds: 45, description: 'Hang with arms fully extended. Let your shoulder blades relax, then retract them slightly. Every second builds grip and shoulder stability.' },
         ],
       },
       {
         id: 'foundation-2',
-        title: 'Building Volume',
+        title: 'First Rep',
         xpReward: 100,
         exercises: [
-          { id: 'f2e1', name: 'Pull-ups', sets: 3, reps: 8, restSeconds: 90, description: 'Full range of motion. Initiate with your lats, not your arms.' },
-          { id: 'f2e2', name: 'Dead Hang', sets: 3, reps: '30s', restSeconds: 45, description: 'Build grip and shoulder endurance. Breathe steadily.' },
-          { id: 'f2e3', name: 'Scapular Pull-ups', sets: 3, reps: 8, restSeconds: 60, description: 'Arms stay straight. Retract and depress shoulder blades to lift body slightly.' },
+          { id: 'f2e1', name: 'Pull-ups', sets: 2, reps: 2, restSeconds: 90, description: 'Quality over everything. Full dead hang to chin over bar — no half reps. Control the descent, 2 seconds down.' },
+          { id: 'f2e2', name: 'Negative Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: '5-second descent. Your muscles are strongest on the way down — use it.' },
+          { id: 'f2e3', name: 'Dead Hang', sets: 3, reps: '20s', restSeconds: 45, description: 'Hang is getting longer. Breathe steadily and stay relaxed.' },
         ],
       },
       {
         id: 'foundation-3',
-        title: 'Strength Surge',
-        xpReward: 150,
+        title: 'Building Reps',
+        xpReward: 100,
         exercises: [
-          { id: 'f3e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. Full range, controlled descent.' },
-          { id: 'f3e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats. A fresh stimulus on top of your pull-up volume.' },
-          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, restSeconds: 60, description: 'Critical for muscle-up prep. Arms stay straight — pure shoulder blade movement.' },
+          { id: 'f3e1', name: 'Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: 'Three full sets now. Rest completely between sets — quality reps only.' },
+          { id: 'f3e2', name: 'Dead Hang', sets: 3, reps: '25s', restSeconds: 45, description: 'Grip is building session by session.' },
+          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 8, restSeconds: 60, description: 'Arms stay perfectly straight — just retract and depress your shoulder blades to lift slightly. Essential muscle-up prep from day one.' },
         ],
       },
       {
         id: 'foundation-4',
+        title: 'Finding Volume',
+        xpReward: 100,
+        exercises: [
+          { id: 'f4e1', name: 'Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Five per set. Take what you\'ve built and push it one step further. Full range, every rep.' },
+          { id: 'f4e2', name: 'Dead Hang', sets: 3, reps: '30s', restSeconds: 45, description: '30 seconds — your grip is becoming serious.' },
+          { id: 'f4e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, restSeconds: 60, description: 'More reps, same perfect form. No elbow bend at all.' },
+        ],
+      },
+      {
+        id: 'foundation-5',
+        title: 'Strong Sets',
+        xpReward: 150,
+        exercises: [
+          { id: 'f5e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Consistent, quality sixes across all three sets. Initiate with your lats, not your arms.' },
+          { id: 'f5e2', name: 'Chin-ups', sets: 3, reps: 4, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats differently — a fresh stimulus alongside your pull-up volume.' },
+          { id: 'f5e3', name: 'Hollow Body Hold', sets: 2, reps: '25s', restSeconds: 45, description: 'Lie on back, press lower back to floor. Arms overhead, legs raised. This core link becomes critical in the transition.' },
+        ],
+      },
+      {
+        id: 'foundation-6',
+        title: 'Strength Surge',
+        xpReward: 150,
+        exercises: [
+          { id: 'f6e1', name: 'Pull-ups', sets: 4, reps: 6, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. This is how strength compounds.' },
+          { id: 'f6e2', name: 'Chin-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
+          { id: 'f6e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Engrain this movement. It is the hidden foundation of every muscle-up.' },
+        ],
+      },
+      {
+        id: 'foundation-7',
         title: 'Max Strength',
         xpReward: 150,
         exercises: [
-          { id: 'f4e1', name: 'Pull-ups', sets: 4, reps: 10, restSeconds: 90, description: 'Two more reps per set than your first session. This is what progress looks like.' },
-          { id: 'f4e2', name: 'Chin-ups', sets: 3, reps: 8, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
-          { id: 'f4e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
+          { id: 'f7e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'Your pull-up peak in this phase. Full range, controlled descent on every rep. This is what you\'ve built toward.' },
+          { id: 'f7e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand volume for balanced upper-body development.' },
+          { id: 'f7e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
         ],
       },
     ],
@@ -345,10 +375,15 @@ export const getNodeStatus = (nodeId: string, completedIds: string[]): 'complete
 };
 
 export const getStartingCompletedLessons = (pullUps: number): string[] => {
-  if (pullUps <= 5) return [];
-  if (pullUps <= 9) return ['foundation-1'];
-  if (pullUps <= 12) return ['foundation-1', 'foundation-2'];
-  return ['foundation-1', 'foundation-2', 'foundation-3'];
+  // Each tier skips lessons the user has clearly surpassed
+  if (pullUps <= 0) return [];
+  if (pullUps <= 2) return ['foundation-1'];
+  if (pullUps <= 4) return ['foundation-1', 'foundation-2'];
+  if (pullUps <= 6) return ['foundation-1', 'foundation-2', 'foundation-3'];
+  if (pullUps <= 8) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4'];
+  if (pullUps <= 10) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5'];
+  if (pullUps <= 12) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5', 'foundation-6'];
+  return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5', 'foundation-6', 'foundation-7'];
 };
 
 export const getCurrentLevel = (completedIds: string[]): {
