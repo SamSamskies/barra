@@ -90,19 +90,15 @@ export default function WorkoutScreen() {
     setPhase('work');
   };
 
-  const handleDoneSet = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
+  const advance = async () => {
     const isLastSet = setIdx >= currentExercise!.sets - 1;
     const isLastExercise = exerciseIdx >= lesson.exercises.length - 1;
 
     if (!isLastSet) {
       setSetIdx(prev => prev + 1);
-      startRest(currentExercise!.restSeconds);
     } else if (!isLastExercise) {
       setExerciseIdx(prev => prev + 1);
       setSetIdx(0);
-      startRest(REST_EXERCISES);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await completeLesson(lesson.id, lesson.xpReward);
@@ -111,6 +107,26 @@ export default function WorkoutScreen() {
         params: { xp: String(lesson.xpReward), lessonTitle: lesson.title },
       });
     }
+  };
+
+  const handleDoneSet = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const isLastSet = setIdx >= currentExercise!.sets - 1;
+    const isLastExercise = exerciseIdx >= lesson.exercises.length - 1;
+    if (isLastSet && isLastExercise) {
+      await advance();
+    } else if (isLastSet) {
+      await advance();
+      startRest(REST_EXERCISES);
+    } else {
+      await advance();
+      startRest(currentExercise!.restSeconds);
+    }
+  };
+
+  const handleSkipSet = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await advance();
   };
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
@@ -381,6 +397,14 @@ export default function WorkoutScreen() {
               {isFinishBtn ? 'Finish Workout' : 'Done Set'}
             </Text>
           </Pressable>
+
+          {!isFinishBtn && (
+            <Pressable style={styles.skipSetBtn} onPress={handleSkipSet}>
+              <Text style={[styles.skipSetBtnText, { color: colors.mutedForeground }]}>
+                Skip set
+              </Text>
+            </Pressable>
+          )}
         </View>
       </SafeAreaView>
     </View>
@@ -651,6 +675,14 @@ const styles = StyleSheet.create({
   },
   restHintText: {
     fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+  },
+  skipSetBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  skipSetBtnText: {
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
   },
   workCTA: {
