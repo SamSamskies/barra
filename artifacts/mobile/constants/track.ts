@@ -63,42 +63,62 @@ export const TRACK_NODES: TrackNode[] = [
       },
       {
         id: 'foundation-4',
-        title: 'Finding Volume',
+        title: 'Steady Climb',
         xpReward: 100,
         exercises: [
-          { id: 'f4e1', name: 'Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Five per set. Take what you\'ve built and push it one step further. Full range, every rep.' },
-          { id: 'f4e2', name: 'Dead Hang', sets: 3, reps: '30s', restSeconds: 45, description: '30 seconds — your grip is becoming serious.' },
+          { id: 'f4e1', name: 'Pull-ups', sets: 3, reps: 4, restSeconds: 90, description: 'One more rep per set. Small steps are real steps — full range and a controlled descent every time.' },
+          { id: 'f4e2', name: 'Dead Hang', sets: 3, reps: '28s', restSeconds: 45, description: 'Grip endurance creeping up. Hold steady.' },
           { id: 'f4e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, restSeconds: 60, description: 'More reps, same perfect form. No elbow bend at all.' },
         ],
       },
       {
         id: 'foundation-5',
-        title: 'Strong Sets',
-        xpReward: 150,
+        title: 'Finding Volume',
+        xpReward: 100,
         exercises: [
-          { id: 'f5e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Consistent, quality sixes across all three sets. Initiate with your lats, not your arms.' },
-          { id: 'f5e2', name: 'Chin-ups', sets: 3, reps: 4, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats differently — a fresh stimulus alongside your pull-up volume.' },
-          { id: 'f5e3', name: 'Hollow Body Hold', sets: 2, reps: '25s', restSeconds: 45, description: 'Lie on back, press lower back to floor. Arms overhead, legs raised. This core link becomes critical in the transition.' },
+          { id: 'f5e1', name: 'Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Five per set. Take what you\'ve built and push it one step further. Full range, every rep.' },
+          { id: 'f5e2', name: 'Dead Hang', sets: 3, reps: '30s', restSeconds: 45, description: '30 seconds — your grip is becoming serious.' },
+          { id: 'f5e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Mastering scapular control now pays off in every node ahead.' },
         ],
       },
       {
         id: 'foundation-6',
-        title: 'Strength Surge',
+        title: 'Strong Sets',
         xpReward: 150,
         exercises: [
-          { id: 'f6e1', name: 'Pull-ups', sets: 4, reps: 6, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. This is how strength compounds.' },
-          { id: 'f6e2', name: 'Chin-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
-          { id: 'f6e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Engrain this movement. It is the hidden foundation of every muscle-up.' },
+          { id: 'f6e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Consistent, quality sixes across all three sets. Initiate with your lats, not your arms.' },
+          { id: 'f6e2', name: 'Chin-ups', sets: 3, reps: 4, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats differently — a fresh stimulus alongside your pull-up volume.' },
+          { id: 'f6e3', name: 'Hollow Body Hold', sets: 2, reps: '25s', restSeconds: 45, description: 'Lie on back, press lower back to floor. Arms overhead, legs raised. This core link becomes critical in the transition.' },
         ],
       },
       {
         id: 'foundation-7',
+        title: 'Strength Surge',
+        xpReward: 150,
+        exercises: [
+          { id: 'f7e1', name: 'Pull-ups', sets: 4, reps: 6, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. This is how strength compounds.' },
+          { id: 'f7e2', name: 'Chin-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
+          { id: 'f7e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Engrain this movement. It is the hidden foundation of every muscle-up.' },
+        ],
+      },
+      {
+        id: 'foundation-8',
+        title: 'Power Seven',
+        xpReward: 150,
+        exercises: [
+          { id: 'f8e1', name: 'Pull-ups', sets: 4, reps: 7, restSeconds: 90, description: 'Seven per set — one step before your peak. Full control, full range. You\'re ready for this.' },
+          { id: 'f8e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand pulling strength keeps pace with your overhand volume.' },
+          { id: 'f8e3', name: 'Dead Hang', sets: 3, reps: '40s', restSeconds: 45, description: 'Almost there on the hang too. Every second is earned.' },
+        ],
+      },
+      {
+        id: 'foundation-9',
         title: 'Max Strength',
         xpReward: 150,
         exercises: [
-          { id: 'f7e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'Your pull-up peak in this phase. Full range, controlled descent on every rep. This is what you\'ve built toward.' },
-          { id: 'f7e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand volume for balanced upper-body development.' },
-          { id: 'f7e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
+          { id: 'f9e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'Your pull-up peak in this phase. Full range, controlled descent on every rep. This is what you\'ve built toward.' },
+          { id: 'f9e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand volume for balanced upper-body development.' },
+          { id: 'f9e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
         ],
       },
     ],
@@ -375,15 +395,19 @@ export const getNodeStatus = (nodeId: string, completedIds: string[]): 'complete
 };
 
 export const getStartingCompletedLessons = (pullUps: number): string[] => {
+  const all = (n: number) =>
+    Array.from({ length: n }, (_, i) => `foundation-${i + 1}`);
   // Each tier skips lessons the user has clearly surpassed
-  if (pullUps <= 0) return [];
-  if (pullUps <= 2) return ['foundation-1'];
-  if (pullUps <= 4) return ['foundation-1', 'foundation-2'];
-  if (pullUps <= 6) return ['foundation-1', 'foundation-2', 'foundation-3'];
-  if (pullUps <= 8) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4'];
-  if (pullUps <= 10) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5'];
-  if (pullUps <= 12) return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5', 'foundation-6'];
-  return ['foundation-1', 'foundation-2', 'foundation-3', 'foundation-4', 'foundation-5', 'foundation-6', 'foundation-7'];
+  if (pullUps <= 0) return [];           // start at Ground Zero
+  if (pullUps <= 2) return all(1);       // skip to First Rep
+  if (pullUps <= 3) return all(2);       // skip to Building Reps
+  if (pullUps <= 4) return all(3);       // skip to Steady Climb
+  if (pullUps <= 5) return all(4);       // skip to Finding Volume
+  if (pullUps <= 6) return all(5);       // skip to Strong Sets
+  if (pullUps <= 8) return all(6);       // skip to Strength Surge
+  if (pullUps <= 10) return all(7);      // skip to Power Seven
+  if (pullUps <= 12) return all(8);      // skip to Max Strength
+  return all(9);                         // Foundation complete → into Strength Base
 };
 
 export const getCurrentLevel = (completedIds: string[]): {
