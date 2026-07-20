@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -14,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { getLessonById } from '@/constants/track';
+import { EXERCISE_DEMOS } from '@/constants/demos';
 
 type Phase = 'intro' | 'work' | 'rest';
 
@@ -364,6 +366,23 @@ export default function WorkoutScreen() {
             </Text>
           </View>
 
+          {/* Watch demo */}
+          {currentExercise && EXERCISE_DEMOS[currentExercise.name] && (
+            <Pressable
+              style={({ pressed }) => [styles.demoBtn, { opacity: pressed ? 0.7 : 1 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Linking.openURL(EXERCISE_DEMOS[currentExercise.name]!);
+              }}
+            >
+              <Ionicons name="logo-youtube" size={16} color="#FF0000" />
+              <Text style={[styles.demoBtnText, { color: colors.foreground }]}>
+                Watch demo
+              </Text>
+              <Ionicons name="open-outline" size={14} color={colors.mutedForeground} />
+            </Pressable>
+          )}
+
           {/* Rest time */}
           {!isFinishBtn && (
             <View style={styles.restHint}>
@@ -685,6 +704,18 @@ const styles = StyleSheet.create({
   skipSetBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
+  },
+  demoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  demoBtnText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
   },
   workCTA: {
     paddingHorizontal: 20,
