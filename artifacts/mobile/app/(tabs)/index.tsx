@@ -81,7 +81,7 @@ export default function PathScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom: insets.bottom + webBottomPad + 20,
+            paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 20,
           },
         ]}
         contentInsetAdjustmentBehavior="automatic"

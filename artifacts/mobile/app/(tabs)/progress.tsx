@@ -39,7 +39,7 @@ export default function ProgressScreen() {
           styles.scroll,
           {
             paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: insets.bottom + webBottomPad + 20,
+            paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 20,
           },
         ]}
         contentInsetAdjustmentBehavior="automatic"
