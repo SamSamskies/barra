@@ -19,11 +19,11 @@ const FEATURES = [
   { icon: 'trophy-outline' as const, text: '7 milestones to the muscle-up' },
 ];
 
-function getStartingPoint(pullUps: number): string {
-  if (pullUps <= 5) return 'Foundation — Level 1, Day 1';
-  if (pullUps <= 9) return 'Foundation — Level 2, skipping basics';
-  if (pullUps <= 12) return 'Foundation — Level 3, strong start';
-  return 'Strength Base — advanced placement';
+function getStartingPoint(pullUps: number): { label: string; skipped: number } {
+  if (pullUps <= 5) return { label: 'Foundation — Lesson 1', skipped: 0 };
+  if (pullUps <= 9) return { label: 'Foundation — Lesson 2', skipped: 1 };
+  if (pullUps <= 12) return { label: 'Foundation — Lesson 3', skipped: 2 };
+  return { label: 'Strength Base — Lesson 1', skipped: 5 };
 }
 
 export default function Onboarding() {
@@ -116,7 +116,7 @@ export default function Onboarding() {
             <Text style={{ color: colors.primary }}>pull-ups</Text> can you do?
           </Text>
           <Text style={[styles.sub, { color: colors.mutedForeground, textAlign: 'center' }]}>
-            We will place you at the right starting point.
+            We'll skip lessons you've already mastered and start you at the right place.
           </Text>
 
           {/* Stepper */}
@@ -142,12 +142,24 @@ export default function Onboarding() {
           </View>
 
           {/* Placement preview */}
-          <View style={[styles.placementCard, { backgroundColor: colors.card, borderColor: colors.accent + '55' }]}>
-            <Ionicons name="pin-outline" size={20} color={colors.accent} />
-            <Text style={[styles.placementText, { color: colors.foreground }]}>
-              {getStartingPoint(pullUps)}
-            </Text>
-          </View>
+          {(() => {
+            const { label, skipped } = getStartingPoint(pullUps);
+            return (
+              <View style={[styles.placementCard, { backgroundColor: colors.card, borderColor: colors.accent + '55' }]}>
+                <Ionicons name="pin-outline" size={20} color={colors.accent} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={[styles.placementText, { color: colors.foreground }]}>
+                    Starting at: {label}
+                  </Text>
+                  {skipped > 0 && (
+                    <Text style={[styles.placementSub, { color: colors.mutedForeground }]}>
+                      {skipped} earlier {skipped === 1 ? 'lesson' : 'lessons'} skipped — you've got this covered
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })()}
 
           <Pressable
             style={({ pressed }) => [
@@ -262,8 +274,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   placementText: {
-    flex: 1,
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
+  },
+  placementSub: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
   },
 });
