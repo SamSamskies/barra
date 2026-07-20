@@ -208,29 +208,6 @@ export default function PathScreen() {
                             },
                           ]
                         );
-                      } else if (isNext) {
-                        Alert.alert(
-                          lesson.title,
-                          'Ready to train?',
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Too easy — skip',
-                              style: 'destructive',
-                              onPress: () => {
-                                setPickerNode(null);
-                                completeLesson(lesson.id);
-                              },
-                            },
-                            {
-                              text: 'Start workout',
-                              onPress: () => {
-                                setPickerNode(null);
-                                router.push(`/workout/${lesson.id}`);
-                              },
-                            },
-                          ]
-                        );
                       } else {
                         setPickerNode(null);
                         router.push(`/workout/${lesson.id}`);

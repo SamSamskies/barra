@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Linking,
   Platform,
   Pressable,
@@ -224,6 +225,31 @@ export default function WorkoutScreen() {
               <Ionicons name="play" size={22} color={colors.primaryForeground} />
               <Text style={[styles.bigBtnText, { color: colors.primaryForeground }]}>
                 Begin
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.skipLink}
+              onPress={() => {
+                Alert.alert(
+                  'Too easy?',
+                  'This will mark the workout as done without completing it.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Skip',
+                      style: 'destructive',
+                      onPress: () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        completeLesson(lesson.id);
+                        router.back();
+                      },
+                    },
+                  ]
+                );
+              }}
+            >
+              <Text style={[styles.skipLinkText, { color: colors.mutedForeground }]}>
+                Too easy — skip
               </Text>
             </Pressable>
           </View>
@@ -695,6 +721,14 @@ const styles = StyleSheet.create({
   },
   restHintText: {
     fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+  },
+  skipLink: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  skipLinkText: {
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
   },
   skipSetBtn: {
