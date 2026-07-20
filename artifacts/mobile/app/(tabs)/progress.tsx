@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
@@ -18,6 +19,7 @@ function lessonIdToLabel(id: string): string {
 export default function ProgressScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { state } = useApp();
 
   const { level, nextXP } = getLevelInfo(state.xp);
@@ -39,7 +41,7 @@ export default function ProgressScreen() {
           styles.scroll,
           {
             paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: insets.bottom + webBottomPad + 100,
+            paddingBottom: tabBarHeight + webBottomPad + 20,
           },
         ]}
         showsVerticalScrollIndicator={false}

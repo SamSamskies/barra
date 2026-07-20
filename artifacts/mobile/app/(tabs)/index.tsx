@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
@@ -30,6 +31,7 @@ const ALIGNMENTS: ('left' | 'center' | 'right')[] = [
 export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { state } = useApp();
 
   if (state.loading) return null;
@@ -81,8 +83,7 @@ export default function PathScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom:
-              insets.bottom + webBottomPad + 100,
+            paddingBottom: tabBarHeight + webBottomPad + 20,
           },
         ]}
         showsVerticalScrollIndicator={false}

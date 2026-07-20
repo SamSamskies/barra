@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +16,7 @@ function isToday(dateStr: string): boolean {
 export default function TrainScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const { state } = useApp();
 
   const next = getNextLesson(state.completedLessonIds);
@@ -65,7 +67,7 @@ export default function TrainScreen() {
           styles.scroll,
           {
             paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: insets.bottom + webBottomPad + 100,
+            paddingBottom: tabBarHeight + webBottomPad + 100,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -125,7 +127,8 @@ export default function TrainScreen() {
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            paddingBottom: insets.bottom + webBottomPad + 8,
+            bottom: tabBarHeight,
+            paddingBottom: webBottomPad + 8,
           },
         ]}
       >
