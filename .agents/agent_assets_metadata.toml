@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "_GchjBkH77poDMOVUEdZq"
+uri = "file://attached_assets/expo-qr.png"
+type = "image"
+title = "Scan with Camera app → opens in Expo Go"
