@@ -31,6 +31,7 @@ export default function WorkoutScreen() {
   const [setIdx, setSetIdx] = useState(0);
   const [restSeconds, setRestSeconds] = useState(60);
   const [restDuration, setRestDuration] = useState(60);
+  const [skippedSets, setSkippedSets] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -104,7 +105,7 @@ export default function WorkoutScreen() {
       await completeLesson(lesson.id, lesson.xpReward);
       router.replace({
         pathname: '/workout/complete',
-        params: { xp: String(lesson.xpReward), lessonTitle: lesson.title },
+        params: { xp: String(lesson.xpReward), lessonTitle: lesson.title, skippedSets: String(skippedSets) },
       });
     }
   };
@@ -126,6 +127,7 @@ export default function WorkoutScreen() {
 
   const handleSkipSet = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSkippedSets(prev => prev + 1);
     await advance();
   };
 

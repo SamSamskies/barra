@@ -8,11 +8,13 @@ import { useApp } from '@/context/AppContext';
 import { getLevelInfo } from '@/constants/track';
 
 export default function CompleteScreen() {
-  const { xp: xpParam, lessonTitle } = useLocalSearchParams<{ xp: string; lessonTitle: string }>();
+  const { xp: xpParam, lessonTitle, skippedSets: skippedParam } = useLocalSearchParams<{ xp: string; lessonTitle: string; skippedSets: string }>();
   const colors = useColors();
   const { state } = useApp();
 
   const xpEarned = parseInt(xpParam ?? '0', 10);
+  const skippedSets = parseInt(skippedParam ?? '0', 10);
+  const hadSkips = skippedSets > 0;
   const { level } = getLevelInfo(state.xp);
 
   const scale = useRef(new Animated.Value(0.5)).current;
@@ -66,11 +68,22 @@ export default function CompleteScreen() {
           </Animated.View>
 
           <View style={styles.titleBlock}>
-            <Text style={[styles.title, { color: colors.foreground }]}>Crushed it!</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>
+              {hadSkips ? 'Good effort!' : 'Crushed it!'}
+            </Text>
             <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               {lessonTitle ?? 'Lesson'} complete
             </Text>
           </View>
+
+          {hadSkips && (
+            <View style={[styles.nudgeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+              <Text style={[styles.nudgeText, { color: colors.foreground }]}>
+                You skipped {skippedSets} {skippedSets === 1 ? 'set' : 'sets'} this session — consider repeating this workout before moving on.
+              </Text>
+            </View>
+          )}
 
           {/* XP pill */}
           <View
@@ -203,5 +216,20 @@ const styles = StyleSheet.create({
   continueBtnText: {
     fontSize: 17,
     fontFamily: 'Inter_700Bold',
+  },
+  nudgeCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignSelf: 'stretch',
+  },
+  nudgeText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 20,
   },
 });

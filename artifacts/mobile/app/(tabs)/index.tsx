@@ -1,5 +1,5 @@
-import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -30,6 +30,7 @@ export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { state } = useApp();
+  const [pickerNode, setPickerNode] = useState<typeof TRACK_NODES[0] | null>(null);
 
   if (state.loading) return null;
 
@@ -45,6 +46,9 @@ export default function PathScreen() {
     );
     if (nextLesson) {
       router.push(`/workout/${nextLesson.id}`);
+    } else {
+      // All lessons completed — let user pick one to repeat
+      setPickerNode(node);
     }
   };
 
@@ -161,6 +165,55 @@ export default function PathScreen() {
         </View>
       </ScrollView>
 
+      {/* Lesson picker modal for completed nodes */}
+      <Modal
+        visible={pickerNode !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPickerNode(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setPickerNode(null)}>
+          <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
+            <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              {pickerNode?.title}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
+              All lessons completed — pick one to repeat
+            </Text>
+            <View style={styles.modalLessons}>
+              {pickerNode?.lessons.map((lesson, i) => (
+                <Pressable
+                  key={lesson.id}
+                  style={({ pressed }) => [
+                    styles.modalLessonRow,
+                    { backgroundColor: colors.background, opacity: pressed ? 0.75 : 1 },
+                  ]}
+                  onPress={() => {
+                    setPickerNode(null);
+                    router.push(`/workout/${lesson.id}`);
+                  }}
+                >
+                  <View style={[styles.modalLessonNum, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.modalLessonNumText, { color: colors.primary }]}>
+                      {String(i + 1).padStart(2, '0')}
+                    </Text>
+                  </View>
+                  <View style={styles.modalLessonInfo}>
+                    <Text style={[styles.modalLessonName, { color: colors.foreground }]}>
+                      {lesson.title}
+                    </Text>
+                    <Text style={[styles.modalLessonDetail, { color: colors.mutedForeground }]}>
+                      {lesson.exercises.length} exercises · {lesson.xpReward} XP
+                    </Text>
+                  </View>
+                  <Ionicons name="refresh-outline" size={18} color={colors.mutedForeground} />
+                </Pressable>
+              ))}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -252,5 +305,67 @@ const styles = StyleSheet.create({
   nextXpText: {
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: '#00000088',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 4,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_700Bold',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    marginTop: -8,
+  },
+  modalLessons: {
+    gap: 10,
+  },
+  modalLessonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+  },
+  modalLessonNum: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalLessonNumText: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
+  modalLessonInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  modalLessonName: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  modalLessonDetail: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
   },
 });
