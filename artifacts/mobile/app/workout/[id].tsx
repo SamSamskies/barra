@@ -17,7 +17,6 @@ import { getLessonById } from '@/constants/track';
 
 type Phase = 'intro' | 'work' | 'rest';
 
-const REST_SETS = 60;
 const REST_EXERCISES = 90;
 
 export default function WorkoutScreen() {
@@ -30,8 +29,8 @@ export default function WorkoutScreen() {
   const [phase, setPhase] = useState<Phase>('intro');
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [setIdx, setSetIdx] = useState(0);
-  const [restSeconds, setRestSeconds] = useState(REST_SETS);
-  const [restDuration, setRestDuration] = useState(REST_SETS);
+  const [restSeconds, setRestSeconds] = useState(60);
+  const [restDuration, setRestDuration] = useState(60);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -99,7 +98,7 @@ export default function WorkoutScreen() {
 
     if (!isLastSet) {
       setSetIdx(prev => prev + 1);
-      startRest(REST_SETS);
+      startRest(currentExercise!.restSeconds);
     } else if (!isLastExercise) {
       setExerciseIdx(prev => prev + 1);
       setSetIdx(0);
@@ -347,6 +346,16 @@ export default function WorkoutScreen() {
               {currentExercise?.description}
             </Text>
           </View>
+
+          {/* Rest time */}
+          {!isFinishBtn && (
+            <View style={styles.restHint}>
+              <Ionicons name="timer-outline" size={15} color={colors.mutedForeground} />
+              <Text style={[styles.restHintText, { color: colors.mutedForeground }]}>
+                {currentExercise?.restSeconds}s rest after each set
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Done button */}
@@ -633,6 +642,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     lineHeight: 22,
+  },
+  restHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'center',
+  },
+  restHintText: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
   },
   workCTA: {
     paddingHorizontal: 20,
