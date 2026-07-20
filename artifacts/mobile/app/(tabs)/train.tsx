@@ -68,6 +68,7 @@ export default function TrainScreen() {
             paddingBottom: 20,
           },
         ]}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Node badge */}
@@ -125,7 +126,7 @@ export default function TrainScreen() {
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            paddingBottom: insets.bottom + webBottomPad + 8,
+            paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 8,
           },
         ]}
       >

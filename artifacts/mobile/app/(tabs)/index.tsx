@@ -84,6 +84,7 @@ export default function PathScreen() {
             paddingBottom: insets.bottom + webBottomPad + 20,
           },
         ]}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Start label */}

@@ -42,6 +42,7 @@ export default function ProgressScreen() {
             paddingBottom: insets.bottom + webBottomPad + 20,
           },
         ]}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.pageTitle, { color: colors.foreground }]}>Progress</Text>
