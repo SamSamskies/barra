@@ -56,9 +56,9 @@ export const TRACK_NODES: TrackNode[] = [
         title: 'Strength Surge',
         xpReward: 150,
         exercises: [
-          { id: 'f3e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Full range, controlled descent. Stop 2–3 reps before failure — quality over quantity.' },
-          { id: 'f3e2', name: 'Chin-ups', sets: 2, reps: 6, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats powerfully.' },
-          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 8, restSeconds: 60, description: 'Critical for muscle-up prep. Arms stay straight — pure shoulder blade movement.' },
+          { id: 'f3e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. Full range, controlled descent.' },
+          { id: 'f3e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats. A fresh stimulus on top of your pull-up volume.' },
+          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, restSeconds: 60, description: 'Critical for muscle-up prep. Arms stay straight — pure shoulder blade movement.' },
         ],
       },
       {
@@ -66,8 +66,8 @@ export const TRACK_NODES: TrackNode[] = [
         title: 'Max Strength',
         xpReward: 150,
         exercises: [
-          { id: 'f4e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'Building volume gradually. Full recovery between sets matters here.' },
-          { id: 'f4e2', name: 'Hollow Body Hold', sets: 3, reps: '30s', restSeconds: 45, description: 'Body tension is the bridge between pull and push in a muscle-up.' },
+          { id: 'f4e1', name: 'Pull-ups', sets: 4, reps: 10, restSeconds: 90, description: 'Two more reps per set than your first session. This is what progress looks like.' },
+          { id: 'f4e2', name: 'Chin-ups', sets: 3, reps: 8, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
           { id: 'f4e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
         ],
       },
