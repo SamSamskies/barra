@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -28,7 +28,7 @@ const ALIGNMENTS: ('left' | 'center' | 'right')[] = [
 export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state } = useApp();
+  const { state, uncompleteLesson } = useApp();
   const [pickerNode, setPickerNode] = useState<typeof TRACK_NODES[0] | null>(null);
 
   if (state.loading) return null;
@@ -185,8 +185,33 @@ export default function PathScreen() {
                       { backgroundColor: colors.background, opacity: pressed ? 0.75 : 1 },
                     ]}
                     onPress={() => {
-                      setPickerNode(null);
-                      router.push(`/workout/${lesson.id}`);
+                      if (done) {
+                        Alert.alert(
+                          lesson.title,
+                          'What would you like to do?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Mark as not done',
+                              style: 'destructive',
+                              onPress: () => {
+                                setPickerNode(null);
+                                uncompleteLesson(lesson.id);
+                              },
+                            },
+                            {
+                              text: 'Repeat workout',
+                              onPress: () => {
+                                setPickerNode(null);
+                                router.push(`/workout/${lesson.id}`);
+                              },
+                            },
+                          ]
+                        );
+                      } else {
+                        setPickerNode(null);
+                        router.push(`/workout/${lesson.id}`);
+                      }
                     }}
                   >
                     <View style={[styles.modalLessonNum, { backgroundColor: done ? colors.primary + '22' : colors.card }]}>

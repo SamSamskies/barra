@@ -21,6 +21,7 @@ interface AppContextType {
   state: AppState;
   completeOnboarding: (pullUps: number) => Promise<void>;
   completeLesson: (lessonId: string) => Promise<void>;
+  uncompleteLesson: (lessonId: string) => Promise<void>;
   resetProgress: () => Promise<void>;
 }
 
@@ -123,6 +124,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [persist]);
 
+  const uncompleteLesson = useCallback(async (lessonId: string) => {
+    setState(prev => {
+      const next: AppState = {
+        ...prev,
+        completedLessonIds: prev.completedLessonIds.filter(id => id !== lessonId),
+        workoutHistory: prev.workoutHistory.filter(r => r.lessonId !== lessonId),
+        loading: false,
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
   const resetProgress = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
@@ -133,7 +147,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider value={{ state, completeOnboarding, completeLesson, resetProgress }}>
+    <AppContext.Provider value={{ state, completeOnboarding, completeLesson, uncompleteLesson, resetProgress }}>
       {children}
     </AppContext.Provider>
   );
