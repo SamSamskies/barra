@@ -40,15 +40,7 @@ export default function PathScreen() {
   const handleNodePress = (nodeId: string) => {
     const node = TRACK_NODES.find(n => n.id === nodeId);
     if (!node) return;
-    const nextLesson = node.lessons.find(
-      l => !state.completedLessonIds.includes(l.id)
-    );
-    if (nextLesson) {
-      router.push(`/workout/${nextLesson.id}`);
-    } else {
-      // All lessons completed — let user pick one to repeat
-      setPickerNode(node);
-    }
+    setPickerNode(node);
   };
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
@@ -163,7 +155,7 @@ export default function PathScreen() {
         </View>
       </ScrollView>
 
-      {/* Lesson picker modal for completed nodes */}
+      {/* Lesson picker modal */}
       <Modal
         visible={pickerNode !== null}
         transparent
@@ -177,37 +169,51 @@ export default function PathScreen() {
               {pickerNode?.title}
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
-              All lessons completed — pick one to repeat
+              Select a lesson
             </Text>
             <View style={styles.modalLessons}>
-              {pickerNode?.lessons.map((lesson, i) => (
-                <Pressable
-                  key={lesson.id}
-                  style={({ pressed }) => [
-                    styles.modalLessonRow,
-                    { backgroundColor: colors.background, opacity: pressed ? 0.75 : 1 },
-                  ]}
-                  onPress={() => {
-                    setPickerNode(null);
-                    router.push(`/workout/${lesson.id}`);
-                  }}
-                >
-                  <View style={[styles.modalLessonNum, { backgroundColor: colors.card }]}>
-                    <Text style={[styles.modalLessonNumText, { color: colors.primary }]}>
-                      {String(i + 1).padStart(2, '0')}
-                    </Text>
-                  </View>
-                  <View style={styles.modalLessonInfo}>
-                    <Text style={[styles.modalLessonName, { color: colors.foreground }]}>
-                      {lesson.title}
-                    </Text>
-                    <Text style={[styles.modalLessonDetail, { color: colors.mutedForeground }]}>
-                      {lesson.exercises.length} exercises
-                    </Text>
-                  </View>
-                  <Ionicons name="refresh-outline" size={18} color={colors.mutedForeground} />
-                </Pressable>
-              ))}
+              {pickerNode?.lessons.map((lesson, i) => {
+                const done = state.completedLessonIds.includes(lesson.id);
+                const isNext = !done && pickerNode.lessons
+                  .slice(0, i)
+                  .every(l => state.completedLessonIds.includes(l.id));
+                return (
+                  <Pressable
+                    key={lesson.id}
+                    style={({ pressed }) => [
+                      styles.modalLessonRow,
+                      { backgroundColor: colors.background, opacity: pressed ? 0.75 : 1 },
+                    ]}
+                    onPress={() => {
+                      setPickerNode(null);
+                      router.push(`/workout/${lesson.id}`);
+                    }}
+                  >
+                    <View style={[styles.modalLessonNum, { backgroundColor: done ? colors.primary + '22' : colors.card }]}>
+                      {done
+                        ? <Ionicons name="checkmark" size={15} color={colors.primary} />
+                        : <Text style={[styles.modalLessonNumText, { color: isNext ? colors.primary : colors.mutedForeground }]}>
+                            {String(i + 1).padStart(2, '0')}
+                          </Text>
+                      }
+                    </View>
+                    <View style={styles.modalLessonInfo}>
+                      <Text style={[styles.modalLessonName, { color: colors.foreground }]}>
+                        {lesson.title}
+                      </Text>
+                      <Text style={[styles.modalLessonDetail, { color: colors.mutedForeground }]}>
+                        {lesson.exercises.length} exercises
+                        {done ? ' · completed' : isNext ? ' · up next' : ''}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={done ? 'refresh-outline' : 'play-outline'}
+                      size={18}
+                      color={colors.mutedForeground}
+                    />
+                  </Pressable>
+                );
+              })}
             </View>
           </Pressable>
         </Pressable>
