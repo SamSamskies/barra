@@ -6,3 +6,9 @@ id = "_GchjBkH77poDMOVUEdZq"
 uri = "file://attached_assets/expo-qr.png"
 type = "image"
 title = "Scan with Camera app → opens in Expo Go"
+
+[[outputs]]
+id = "j-ZyPQulNFbeyHdeN6Daa"
+uri = "file://screenshots/expo-qr.png"
+type = "image"
+title = "Expo Go QR Code — exp://barra-calisthenx.loca.lt:18115"
