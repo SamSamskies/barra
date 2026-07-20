@@ -126,10 +126,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const uncompleteLesson = useCallback(async (lessonId: string) => {
     setState(prev => {
+      const newHistory = prev.workoutHistory.filter(r => r.lessonId !== lessonId);
+      const newLastWorkoutDate = newHistory.length > 0 ? newHistory[0]!.completedAt : null;
       const next: AppState = {
         ...prev,
         completedLessonIds: prev.completedLessonIds.filter(id => id !== lessonId),
-        workoutHistory: prev.workoutHistory.filter(r => r.lessonId !== lessonId),
+        workoutHistory: newHistory,
+        lastWorkoutDate: newLastWorkoutDate,
         loading: false,
       };
       persist(next);
