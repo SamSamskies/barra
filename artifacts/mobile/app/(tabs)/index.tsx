@@ -13,7 +13,6 @@ import {
   TRACK_NODES,
   getNodeProgress,
   getNodeStatus,
-  getNextLesson,
 } from '@/constants/track';
 
 // Top-to-bottom path: Foundation at top, Muscle-up at bottom
@@ -37,8 +36,6 @@ export default function PathScreen() {
   if (!state.onboardingComplete) {
     return <Redirect href="/onboarding" />;
   }
-
-  const next = getNextLesson(state.completedLessonIds);
 
   const handleNodePress = (nodeId: string) => {
     const node = TRACK_NODES.find(n => n.id === nodeId);
@@ -164,38 +161,6 @@ export default function PathScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom CTA */}
-      {next && (
-        <View
-          style={[
-            styles.bottomCTA,
-            {
-              backgroundColor: colors.background,
-              borderTopColor: colors.border,
-              paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 8,
-            },
-          ]}
-        >
-          <View style={styles.nextRow}>
-            <View style={styles.nextInfo}>
-              <Text style={[styles.nextHint, { color: colors.mutedForeground }]}>
-                Up next
-              </Text>
-              <Text style={[styles.nextName, { color: colors.foreground }]} numberOfLines={1}>
-                {next.lesson.title}
-              </Text>
-            </View>
-            <View
-              style={[styles.nextXpBadge, { backgroundColor: colors.card }]}
-            >
-              <Ionicons name="star" size={14} color={colors.accent} />
-              <Text style={[styles.nextXpText, { color: colors.accent }]}>
-                +{next.lesson.xpReward}
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -283,39 +248,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-  bottomCTA: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-  },
-  nextRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  nextInfo: { gap: 2 },
-  nextHint: {
-    fontSize: 11,
-    fontFamily: 'Inter_500Medium',
-    letterSpacing: 0.5,
-  },
-  nextName: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    maxWidth: 220,
-  },
-  nextXpBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
   },
   nextXpText: {
     fontSize: 13,
