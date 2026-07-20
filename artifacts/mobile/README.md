@@ -41,25 +41,25 @@ Open the **Camera app** on your iPhone and scan the QR code. It will prompt you 
 
 By default, ngrok assigns a random URL each time the dev server starts. When the URL changes, Expo Go treats it as a new app and **your progress resets**.
 
-To fix this, use a free ngrok static domain:
+To fix this, copy `.env.example` to `.env` and fill in your ngrok credentials:
+
+```bash
+cp .env.example .env
+```
+
+```ini
+# .env
+NGROK_AUTHTOKEN=your_authtoken_here
+NGROK_STATIC_DOMAIN=your-domain.ngrok-free.app
+```
+
+How to get these values:
 
 1. Create a free account at [ngrok.com](https://ngrok.com)
 2. Copy your **Authtoken** from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken)
-3. Claim your free **Static Domain** from [ngrok dashboard → Domains](https://dashboard.ngrok.com/cloud-edge/domains)
-4. Set two environment variables before running:
+3. Claim your free **Static Domain** at [ngrok dashboard → Domains](https://dashboard.ngrok.com/cloud-edge/domains)
 
-```bash
-export NGROK_AUTHTOKEN=your_authtoken_here
-export NGROK_STATIC_DOMAIN=your-domain.ngrok-free.app
-```
-
-Then update the `dev` script in `package.json` to use them:
-
-```json
-"dev": "NGROK_AUTHTOKEN=$NGROK_AUTHTOKEN pnpm exec expo start --tunnel --port $PORT"
-```
-
-With a static domain, the QR code URL never changes between restarts and your progress persists.
+The dev server loads `.env` automatically — no extra steps needed. With a static domain the QR code URL never changes between restarts and your progress persists.
 
 ---
 
