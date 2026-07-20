@@ -15,7 +15,6 @@ function isToday(dateStr: string): boolean {
 export default function TrainScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = Platform.OS === 'web' ? 84 : 49 + insets.bottom;
   const { state } = useApp();
 
   const next = getNextLesson(state.completedLessonIds);
@@ -66,7 +65,7 @@ export default function TrainScreen() {
           styles.scroll,
           {
             paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: tabBarHeight + webBottomPad + 100,
+            paddingBottom: 20,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -126,8 +125,7 @@ export default function TrainScreen() {
           {
             backgroundColor: colors.background,
             borderTopColor: colors.border,
-            bottom: tabBarHeight,
-            paddingBottom: webBottomPad + 8,
+            paddingBottom: insets.bottom + webBottomPad + 8,
           },
         ]}
       >
@@ -252,10 +250,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
   },
   bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,

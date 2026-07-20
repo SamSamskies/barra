@@ -18,7 +18,6 @@ function lessonIdToLabel(id: string): string {
 export default function ProgressScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = Platform.OS === 'web' ? 84 : 49 + insets.bottom;
   const { state } = useApp();
 
   const { level, nextXP } = getLevelInfo(state.xp);
@@ -40,7 +39,7 @@ export default function ProgressScreen() {
           styles.scroll,
           {
             paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: tabBarHeight + webBottomPad + 20,
+            paddingBottom: insets.bottom + webBottomPad + 20,
           },
         ]}
         showsVerticalScrollIndicator={false}

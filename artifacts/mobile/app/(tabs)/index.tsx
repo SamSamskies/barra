@@ -30,7 +30,6 @@ const ALIGNMENTS: ('left' | 'center' | 'right')[] = [
 export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = Platform.OS === 'web' ? 84 : 49 + insets.bottom;
   const { state } = useApp();
 
   if (state.loading) return null;
@@ -82,7 +81,7 @@ export default function PathScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom: tabBarHeight + webBottomPad + 20,
+            paddingBottom: insets.bottom + webBottomPad + 20,
           },
         ]}
         showsVerticalScrollIndicator={false}
