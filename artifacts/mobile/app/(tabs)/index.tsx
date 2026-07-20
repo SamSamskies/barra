@@ -165,12 +165,23 @@ export default function PathScreen() {
         <Pressable style={styles.modalBackdrop} onPress={() => setPickerNode(null)}>
           <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
             <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              {pickerNode?.title}
-            </Text>
-            <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
-              Select a lesson
-            </Text>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderText}>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+                  {pickerNode?.title}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
+                  Select a lesson
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setPickerNode(null)}
+                hitSlop={12}
+                style={[styles.modalCloseBtn, { backgroundColor: colors.background }]}
+              >
+                <Ionicons name="close" size={18} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
             <View style={styles.modalLessons}>
               {pickerNode?.lessons.map((lesson, i) => {
                 const done = state.completedLessonIds.includes(lesson.id);
@@ -354,6 +365,25 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 4,
+  },
+  modalHeaderText: {
+    flex: 1,
+    gap: 4,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
   modalTitle: {
     fontSize: 20,
