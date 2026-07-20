@@ -69,7 +69,7 @@ export default function PathScreen() {
       >
         <View style={styles.headerRow}>
           <Text style={[styles.appName, { color: colors.foreground }]}>
-            CalisthenX
+            Barra
           </Text>
           <StreakBadge streak={state.streak} />
         </View>
