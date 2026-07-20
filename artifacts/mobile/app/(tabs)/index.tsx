@@ -28,7 +28,7 @@ const ALIGNMENTS: ('left' | 'center' | 'right')[] = [
 export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, uncompleteLesson } = useApp();
+  const { state, uncompleteLesson, completeLesson } = useApp();
   const [pickerNode, setPickerNode] = useState<typeof TRACK_NODES[0] | null>(null);
 
   if (state.loading) return null;
@@ -201,6 +201,29 @@ export default function PathScreen() {
                             },
                             {
                               text: 'Repeat workout',
+                              onPress: () => {
+                                setPickerNode(null);
+                                router.push(`/workout/${lesson.id}`);
+                              },
+                            },
+                          ]
+                        );
+                      } else if (isNext) {
+                        Alert.alert(
+                          lesson.title,
+                          'Ready to train?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Too easy — skip',
+                              style: 'destructive',
+                              onPress: () => {
+                                setPickerNode(null);
+                                completeLesson(lesson.id);
+                              },
+                            },
+                            {
+                              text: 'Start workout',
                               onPress: () => {
                                 setPickerNode(null);
                                 router.push(`/workout/${lesson.id}`);

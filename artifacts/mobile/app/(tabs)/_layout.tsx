@@ -14,10 +14,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'map', selected: 'map.fill' }} />
         <Label>Path</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="train">
-        <Icon sf={{ default: 'figure.strengthtraining.traditional', selected: 'figure.strengthtraining.traditional' }} />
-        <Label>Train</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="progress">
         <Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
         <Label>Progress</Label>
@@ -55,18 +51,6 @@ function ClassicTabLayout() {
               <SymbolView name="map.fill" tintColor={color} size={22} />
             ) : (
               <Feather name="map" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="train"
-        options={{
-          title: 'Train',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="figure.strengthtraining.traditional" tintColor={color} size={22} />
-            ) : (
-              <Feather name="activity" size={22} color={color} />
             ),
         }}
       />
