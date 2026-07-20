@@ -15,15 +15,21 @@ import { useApp } from '@/context/AppContext';
 
 const FEATURES = [
   { icon: 'map-outline' as const, text: 'Structured skill-tree progression' },
-  { icon: 'flash-outline' as const, text: 'Daily lessons with clear milestones' },
+  { icon: 'flash-outline' as const, text: 'Structured lessons with clear milestones' },
   { icon: 'trophy-outline' as const, text: '7 milestones to the muscle-up' },
 ];
 
 function getStartingPoint(pullUps: number): { label: string; skipped: number } {
-  if (pullUps <= 5) return { label: 'Foundation — Lesson 1', skipped: 0 };
-  if (pullUps <= 9) return { label: 'Foundation — Lesson 2', skipped: 1 };
-  if (pullUps <= 12) return { label: 'Foundation — Lesson 3', skipped: 2 };
-  return { label: 'Strength Base — Lesson 1', skipped: 5 };
+  if (pullUps <= 0)  return { label: 'Foundation — Ground Zero', skipped: 0 };
+  if (pullUps <= 2)  return { label: 'Foundation — First Rep', skipped: 1 };
+  if (pullUps <= 3)  return { label: 'Foundation — Building Reps', skipped: 2 };
+  if (pullUps <= 4)  return { label: 'Foundation — Steady Climb', skipped: 3 };
+  if (pullUps <= 5)  return { label: 'Foundation — Finding Volume', skipped: 4 };
+  if (pullUps <= 6)  return { label: 'Foundation — Strong Sets', skipped: 5 };
+  if (pullUps <= 8)  return { label: 'Foundation — Strength Surge', skipped: 6 };
+  if (pullUps <= 10) return { label: 'Foundation — Power Seven', skipped: 7 };
+  if (pullUps <= 12) return { label: 'Foundation — Max Strength', skipped: 8 };
+  return { label: 'Strength Base — Scapular Power', skipped: 9 };
 }
 
 export default function Onboarding() {
@@ -66,7 +72,7 @@ export default function Onboarding() {
                 <Text style={{ color: colors.primary }}>Muscle-up</Text>
               </Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                A structured calisthenics system. Daily lessons, skill milestones, and real progress toward your goal.
+                A structured calisthenics system. Train at your own pace, hit skill milestones, and make real progress toward your goal.
               </Text>
             </View>
 
