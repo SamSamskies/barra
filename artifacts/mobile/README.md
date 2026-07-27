@@ -9,6 +9,7 @@ A gamified iOS calisthenics app that guides you from your current pull-up level 
 - **Node.js** v18 or later
 - **pnpm** — `npm install -g pnpm`
 - **Expo Go** on your iPhone — [download from the App Store](https://apps.apple.com/app/expo-go/id982107779)
+- **ngrok CLI** (for a stable tunnel URL) — `brew install ngrok`
 
 ---
 
@@ -41,16 +42,17 @@ Open the **Camera app** on your iPhone and scan the QR code. It will prompt you 
 
 By default, ngrok assigns a random URL each time the dev server starts. When the URL changes, Expo Go treats it as a new app and **your progress resets**.
 
-To fix this, copy `.env.example` to `.env` and fill in your ngrok credentials:
+To fix this, install the ngrok CLI, then copy `.env.example` to `.env` and fill in your credentials:
 
 ```bash
+brew install ngrok   # or https://ngrok.com/download
 cp .env.example .env
 ```
 
 ```ini
 # .env
 NGROK_AUTHTOKEN=your_authtoken_here
-NGROK_STATIC_DOMAIN=your-domain.ngrok-free.app
+NGROK_STATIC_DOMAIN=your-domain.ngrok-free.dev
 ```
 
 How to get these values:
@@ -59,7 +61,7 @@ How to get these values:
 2. Copy your **Authtoken** from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken)
 3. Claim your free **Static Domain** at [ngrok dashboard → Domains](https://dashboard.ngrok.com/cloud-edge/domains)
 
-The dev server loads `.env` automatically — no extra steps needed. With a static domain the QR code URL never changes between restarts and your progress persists.
+The dev server loads `.env` automatically and starts your reserved domain via the ngrok CLI. The QR code URL stays the same between restarts and your progress persists.
 
 ---
 

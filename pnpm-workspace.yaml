@@ -145,8 +145,8 @@ overrides:
   "rollup>@rollup/rollup-win32-ia32-msvc": "-"
   "rollup>@rollup/rollup-win32-x64-gnu": "-"
   "rollup>@rollup/rollup-win32-x64-msvc": "-"
-  "@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64": "-"
-  "@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64": "-"
+  # Keep darwin + linux-x64 so Expo tunnel works on local Macs and Replit.
+  # Exclude other platforms to shrink the install.
   "@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64": "-"

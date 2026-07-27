@@ -137,8 +137,6 @@ overrides:
   rollup>@rollup/rollup-win32-ia32-msvc: '-'
   rollup>@rollup/rollup-win32-x64-gnu: '-'
   rollup>@rollup/rollup-win32-x64-msvc: '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64': '-'
@@ -1224,6 +1222,16 @@ packages:
   '@expo/metro@54.2.0':
     resolution: {integrity: sha512-h68TNZPGsk6swMmLm9nRSnE2UXm48rWwgcbtAHVMikXvbxdS41NDHHeqg1rcQ9AbznDRp6SQVC2MVpDnsRKU1w==}
 
+  '@expo/ngrok-bin-darwin-arm64@2.3.41':
+    resolution: {integrity: sha512-TPf95xp6SkvbRONZjltTOFcCJbmzAH7lrQ36Dv+djrOckWGPVq4HCur48YAeiGDqspmFEmqZ7ykD5c/bDfRFOA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@expo/ngrok-bin-darwin-x64@2.3.41':
+    resolution: {integrity: sha512-29QZHfX4Ec0p0pQF5UrqiP2/Qe7t2rI96o+5b8045VCEl9AEAKHceGuyo+jfUDR4FSQBGFLSDb06xy8ghL3ZYA==}
+    cpu: [x64]
+    os: [darwin]
+
   '@expo/ngrok-bin-linux-x64@2.3.41':
     resolution: {integrity: sha512-LcU3MbYHv7Sn2eFz8Yzo2rXduufOvX1/hILSirwCkH+9G8PYzpwp2TeGqVWuO+EmvtBe6NEYwgdQjJjN6I4L1A==}
     cpu: [x64]
@@ -2194,7 +2202,6 @@ packages:
     resolution: {integrity: sha512-5BqxR/pshjey51iliyzTD5Xi3EN0aLmQ2lZ3lvefVV9c82BvrLo2/6OT55iifpWBufs6kdwWbuOKS841DrmK9A==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@scalar/helpers@0.9.0':
     resolution: {integrity: sha512-M34CLRCttqC1bXthI/QSzQj0s5C6nrU2PFWf/vOT3RpycbiGDGQbqR+5RfFzpOIQvRqbHfNdcRbeiZBw+vCbkQ==}
@@ -2274,7 +2281,6 @@ packages:
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@tailwindcss/oxide-wasm32-wasi@4.3.2':
     resolution: {integrity: sha512-4ec2Z/LOmRsAgU23CS4xeJfcJlmRg94A/XrbGRCF1gyU/zdDfRLYDVsS+ynSZCmGNxQ1jQriQOKMQeQxBA3Isw==}
@@ -3992,7 +3998,6 @@ packages:
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   lightningcss@1.32.0:
     resolution: {integrity: sha512-NXYBzinNrblfraPGyrbPoD19C1h9lfI/1mzgWYvXUTe414Gz/X1FD2XBZSZM7rRTrMA8JL3OtAaGifrIKhQ5yQ==}
@@ -6629,11 +6634,19 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@expo/ngrok-bin-darwin-arm64@2.3.41':
+    optional: true
+
+  '@expo/ngrok-bin-darwin-x64@2.3.41':
+    optional: true
+
   '@expo/ngrok-bin-linux-x64@2.3.41':
     optional: true
 
   '@expo/ngrok-bin@2.3.42':
     optionalDependencies:
+      '@expo/ngrok-bin-darwin-arm64': 2.3.41
+      '@expo/ngrok-bin-darwin-x64': 2.3.41
       '@expo/ngrok-bin-linux-x64': 2.3.41
 
   '@expo/ngrok@4.1.3':
