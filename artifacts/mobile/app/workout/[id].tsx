@@ -4,7 +4,6 @@ import {
   Linking,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { getLessonById } from '@/constants/track';
 import { EXERCISE_DEMOS } from '@/constants/demos';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Phase = 'intro' | 'work' | 'rest';
 

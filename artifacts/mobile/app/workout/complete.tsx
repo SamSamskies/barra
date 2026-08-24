@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { getCurrentLevel } from '@/constants/track';
