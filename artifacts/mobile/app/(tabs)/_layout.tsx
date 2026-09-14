@@ -4,19 +4,22 @@ import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 
 function NativeTabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'map', selected: 'map.fill' }} />
-        <Label>Path</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'map', selected: 'map.fill' }} md="map" />
+        <NativeTabs.Trigger.Label>Path</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="progress">
-        <Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <Label>Progress</Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }}
+          md="bar_chart"
+        />
+        <NativeTabs.Trigger.Label>Progress</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
