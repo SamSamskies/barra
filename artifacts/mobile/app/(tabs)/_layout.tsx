@@ -1,10 +1,10 @@
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { SymbolView } from 'expo-symbols';
 
 function NativeTabLayout() {
@@ -49,24 +49,28 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: 'Path',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="map.fill" tintColor={color} size={22} />
+          tabBarIcon: ({ color }) => {
+            const tint = String(color ?? '');
+            return isIOS ? (
+              <SymbolView name="map.fill" tintColor={tint} size={22} />
             ) : (
-              <Feather name="map" size={22} color={color} />
-            ),
+              <Feather name="map" size={22} color={tint} />
+            );
+          },
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="chart.bar.fill" tintColor={color} size={22} />
+          tabBarIcon: ({ color }) => {
+            const tint = String(color ?? '');
+            return isIOS ? (
+              <SymbolView name="chart.bar.fill" tintColor={tint} size={22} />
             ) : (
-              <Feather name="bar-chart-2" size={22} color={color} />
-            ),
+              <Feather name="bar-chart-2" size={22} color={tint} />
+            );
+          },
         }}
       />
     </Tabs>
