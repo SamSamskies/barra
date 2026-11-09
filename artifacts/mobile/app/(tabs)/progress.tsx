@@ -1,282 +1,67 @@
-import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import React, { useState } from 'react';
+import { Text, View } from 'react-native';
+import { Redirect, router } from 'expo-router';
 import { useApp } from '@/context/AppContext';
 import { StreakBadge } from '@/components/StreakBadge';
-import { TRACK_NODES, getCurrentLevel } from '@/constants/track';
-
-function lessonIdToLabel(id: string): string {
-  return id
-    .split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
+import { Action, Body, Card, Heading, Page } from '@/components/TrainingUI';
+import { ALL_LESSONS, TRACK_NODES, getCurrentLevel, getLessonById, GOAL_LESSON_ID, RECOVERY_GUIDANCE } from '@/constants/track';
+import { creditedIds } from '@/lib/progression';
+import { useColors } from '@/hooks/useColors';
 
 export default function ProgressScreen() {
+  const { state, resetProgress } = useApp();
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const { state } = useApp();
-
-  const { level, node: currentNode, lessonsComplete, lessonsTotal } = getCurrentLevel(state.completedLessonIds);
-
-
-  const webTopPad = Platform.OS === 'web' ? 67 : 0;
-  const webBottomPad = Platform.OS === 'web' ? 34 : 0;
-
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          {
-            paddingTop: insets.top + webTopPad + 20,
-            paddingBottom: insets.bottom + (Platform.OS !== 'web' ? 49 : 0) + webBottomPad + 20,
-          },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={[styles.pageTitle, { color: colors.foreground }]}>Progress</Text>
-
-        {/* Level card */}
-        <View
-          style={[
-            styles.levelCard,
-            { backgroundColor: colors.card, borderColor: currentNode.nodeColor + '44' },
-          ]}
-        >
-          <View style={styles.levelTop}>
-            <View>
-              <Text style={[styles.levelLabel, { color: colors.mutedForeground }]}>LEVEL</Text>
-              <Text style={[styles.levelNum, { color: currentNode.nodeColor }]}>{level}</Text>
-            </View>
-            <StreakBadge streak={state.streak} size="large" />
-          </View>
-          <View style={styles.stageRow}>
-            <View style={[styles.stageIcon, { backgroundColor: currentNode.nodeColor + '22' }]}>
-              <Ionicons name={currentNode.icon as any} size={16} color={currentNode.nodeColor} />
-            </View>
-            <Text style={[styles.stageName, { color: colors.foreground }]}>{currentNode.title}</Text>
-            <Text style={[styles.stageProg, { color: colors.mutedForeground }]}>
-              {lessonsComplete}/{lessonsTotal} lessons
-            </Text>
-          </View>
-          <View style={[styles.stageTrack, { backgroundColor: colors.muted }]}>
-            <View
-              style={[
-                styles.stageFill,
-                {
-                  backgroundColor: currentNode.nodeColor,
-                  width: `${lessonsTotal > 0 ? (lessonsComplete / lessonsTotal) * 100 : 0}%`,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        {/* Node progress */}
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Track Progress</Text>
-
-        <View style={styles.nodeList}>
-          {TRACK_NODES.map(node => {
-            const done = node.lessons.filter(l =>
-              state.completedLessonIds.includes(l.id)
-            ).length;
-            const total = node.lessons.length;
-            const pct = total > 0 ? done / total : 0;
-
-            return (
-              <View key={node.id} style={styles.nodeRow}>
-                <View
-                  style={[
-                    styles.nodeIconBox,
-                    { backgroundColor: node.nodeColor + '22' },
-                  ]}
-                >
-                  <Ionicons
-                    name={node.icon as any}
-                    size={18}
-                    color={node.nodeColor}
-                  />
-                </View>
-                <View style={styles.nodeInfo}>
-                  <View style={styles.nodeRowTop}>
-                    <Text style={[styles.nodeName, { color: colors.foreground }]}>
-                      {node.title}
-                    </Text>
-                    <Text style={[styles.nodeCount, { color: colors.mutedForeground }]}>
-                      {done}/{total}
-                    </Text>
-                  </View>
-                  <View style={[styles.nodeTrack, { backgroundColor: colors.muted }]}>
-                    <View
-                      style={[
-                        styles.nodeFill,
-                        { backgroundColor: node.nodeColor, width: `${pct * 100}%` },
-                      ]}
-                    />
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Recent workouts */}
-        {state.workoutHistory.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Recent Workouts
-            </Text>
-            <View style={styles.historyList}>
-              {state.workoutHistory.slice(0, 10).map((record, i) => (
-                <View key={i} style={[styles.historyRow, { backgroundColor: colors.card }]}>
-                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                  <View style={styles.historyInfo}>
-                    <Text style={[styles.historyName, { color: colors.foreground }]}>
-                      {lessonIdToLabel(record.lessonId)}
-                    </Text>
-                    <Text style={[styles.historyDate, { color: colors.mutedForeground }]}>
-                      {new Date(record.completedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-      </ScrollView>
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  if (state.loading) return null;
+  if (!state.onboardingComplete) return <Redirect href="/onboarding" />;
+  const { level, node } = getCurrentLevel(creditedIds(state));
+  const placementOnly = state.assessedLessonIds.filter(id => !state.completedLessonIds.includes(id));
+  const goal = state.completedLessonIds.includes(GOAL_LESSON_ID);
+  return <Page>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Heading>Progress</Heading><StreakBadge streak={state.streak} />
     </View>
-  );
+    <Card>
+      <Heading small>{goal ? 'First muscle-up achieved' : `Phase ${level} of ${TRACK_NODES.length}: ${node.title}`}</Heading>
+      <Body>{goal ? 'Confirmed by your report of an actual controlled unassisted rep.' : 'The goal requires an actual controlled unassisted rep, not just attempts.'}</Body>
+      <Body>{state.completedLessonIds.length} / {ALL_LESSONS.length} lessons completed in workouts</Body>
+      <Body>{placementOnly.length} earlier lessons assessed for placement only</Body>
+      <Body>{state.workoutHistory.length} workout sessions, including practice and repeats</Body>
+    </Card>
+    <Body>{RECOVERY_GUIDANCE}</Body>
+    <Heading small>Roadmap progress</Heading>
+    {TRACK_NODES.map(phase => {
+      const completed = phase.lessons.filter(l => state.completedLessonIds.includes(l.id)).length;
+      const assessed = phase.lessons.filter(l => placementOnly.includes(l.id)).length;
+      return <Card key={phase.id}>
+        <Text style={{ color: phase.nodeColor, fontFamily: 'Inter_600SemiBold', fontSize: 17 }}>{phase.title}</Text>
+        <Body>{completed} completed · {assessed} placement-only · {phase.lessons.length} lessons</Body>
+        <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.muted }}>
+          <View style={{ height: 6, borderRadius: 3, width: `${(completed + assessed) / phase.lessons.length * 100}%`, backgroundColor: phase.nodeColor }} />
+        </View>
+      </Card>;
+    })}
+    <Heading small>Session history</Heading>
+    {state.workoutHistory.length === 0 && <Body>No workouts yet. Placement is not a performed session.</Body>}
+    {state.workoutHistory.map(record => <Card key={record.id}>
+      <Heading small>{getLessonById(record.lessonId)?.lesson.title ?? 'Unknown lesson'}</Heading>
+      <Body>{record.outcome === 'practice' ? 'Practice / retry · no new mastery' : record.outcome === 'repeat' ? 'Successful repeat · no duplicate mastery' : 'Controlled prescription completed'}</Body>
+      <Body>{new Date(record.completedAt).toLocaleString()}</Body>
+      {record.skippedSets > 0 && <Body>{record.skippedSets} sets skipped or unmet</Body>}
+      <Action secondary title="Preview / repeat this lesson" onPress={() => router.push(`/workout/${record.lessonId}`)} />
+    </Card>)}
+    {confirmReset ? <Card>
+      <Heading small>Clear all new local progress?</Heading>
+      <Body>This clears placement, completed lessons, every session and streak on this device. It cannot be undone. You will choose a fresh starting point.</Body>
+      {!!error && <Body>{error}</Body>}
+      <Action title={busy ? 'Resetting…' : 'Clear progress and start fresh'} disabled={busy} onPress={async () => {
+        setBusy(true);
+        try { await resetProgress(); router.replace('/onboarding'); }
+        catch (e) { setError(`Could not reset: ${String(e)}`); setBusy(false); }
+      }} />
+      <Action secondary title="Keep my progress" disabled={busy} onPress={() => setConfirmReset(false)} />
+    </Card> : <Action secondary title="Reset local progress" onPress={() => setConfirmReset(true)} />}
+  </Page>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  pageTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter_700Bold',
-  },
-  levelCard: {
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    gap: 12,
-  },
-  levelTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  levelLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 1.5,
-  },
-  levelNum: {
-    fontSize: 52,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 60,
-  },
-  stageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stageIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stageName: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  stageProg: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  stageTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  stageFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-    marginTop: 4,
-  },
-  nodeList: { gap: 14 },
-  nodeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  nodeIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nodeInfo: { flex: 1, gap: 6 },
-  nodeRowTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  nodeName: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  nodeCount: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  nodeTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  nodeFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  historyList: { gap: 8 },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    gap: 10,
-  },
-  historyInfo: { flex: 1, gap: 2 },
-  historyName: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  historyDate: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  historyXP: {
-    fontSize: 15,
-    fontFamily: 'Inter_700Bold',
-  },
-  success: {},
-});

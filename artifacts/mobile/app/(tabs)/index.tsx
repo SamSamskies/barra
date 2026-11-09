@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -12,23 +12,22 @@ import {
   TRACK_NODES,
   getNodeProgress,
   getNodeStatus,
+  getNextLesson,
+  canStartLesson,
+  GOAL_LESSON_ID,
+  ALL_LESSONS,
 } from '@/constants/track';
+import { creditedIds } from '@/lib/progression';
 
-// Top-to-bottom path: Foundation at top, Muscle-up at bottom
+// Alignment repeats independently of curriculum phase count.
 const ALIGNMENTS: ('left' | 'center' | 'right')[] = [
-  'center', // Foundation
-  'right',  // Strength Base
-  'left',   // Power Up
-  'right',  // Archer
-  'center', // Negatives
-  'left',   // Transition
-  'center', // Muscle-up
+  'center', 'right', 'left', 'right', 'left', 'center',
 ];
 
 export default function PathScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, uncompleteLesson, completeLesson } = useApp();
+  const { state } = useApp();
   const [pickerNode, setPickerNode] = useState<typeof TRACK_NODES[0] | null>(null);
 
   if (state.loading) return null;
@@ -45,6 +44,9 @@ export default function PathScreen() {
 
   const webTopPad = Platform.OS === 'web' ? 67 : 0;
   const webBottomPad = Platform.OS === 'web' ? 34 : 0;
+  const credited = creditedIds(state);
+  const next = getNextLesson(credited);
+  const goal = state.completedLessonIds.includes(GOAL_LESSON_ID);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -79,6 +81,14 @@ export default function PathScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Start label */}
+        <Text style={{ color: colors.mutedForeground, fontSize: 14, lineHeight: 22, marginBottom: 16 }}>
+          {TRACK_NODES.length} phases · {ALL_LESSONS.length} lessons. Mixed sessions, one progression focus at a time. Pulling continues from 3 × 5 toward 3 × 8 alongside support and dips. Take recovery days.
+          {goal ? '\nFirst controlled muscle-up achieved.' : ''}
+        </Text>
+        {next && <Pressable accessibilityRole="button" onPress={() => router.push(`/workout/${next.lesson.id}`)} style={{ padding: 16, backgroundColor: colors.card, borderRadius: 16, marginBottom: 28 }}>
+          <Text style={{ color: colors.primary, fontFamily: 'Inter_600SemiBold' }}>Current step: {next.lesson.title}</Text>
+          <Text style={{ color: colors.mutedForeground, marginTop: 6 }}>Preview, practice or repeat — no fixed timeline.</Text>
+        </Pressable>}
         <View style={styles.pathLabelRow}>
           <View style={[styles.pathLabelLine, { backgroundColor: colors.border }]} />
           <Text style={[styles.pathLabel, { color: colors.mutedForeground }]}>START</Text>
@@ -87,8 +97,8 @@ export default function PathScreen() {
 
         {TRACK_NODES.map((node, idx) => {
           const alignment = ALIGNMENTS[idx] ?? 'center';
-          const status = getNodeStatus(node.id, state.completedLessonIds);
-          const progress = getNodeProgress(node.id, state.completedLessonIds);
+          const status = getNodeStatus(node.id, credited);
+          const progress = getNodeProgress(node.id, credited);
           const isLast = idx === TRACK_NODES.length - 1;
 
           return (
@@ -171,7 +181,7 @@ export default function PathScreen() {
                   {pickerNode?.title}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
-                  Select a lesson
+                  {pickerNode?.subtitle} · tap to inspect
                 </Text>
               </View>
               <Pressable
@@ -182,12 +192,12 @@ export default function PathScreen() {
                 <Ionicons name="close" size={18} color={colors.mutedForeground} />
               </Pressable>
             </View>
-            <View style={styles.modalLessons}>
+            <ScrollView contentContainerStyle={styles.modalLessons}>
               {pickerNode?.lessons.map((lesson, i) => {
                 const done = state.completedLessonIds.includes(lesson.id);
-                const isNext = !done && pickerNode.lessons
-                  .slice(0, i)
-                  .every(l => state.completedLessonIds.includes(l.id));
+                const assessed = state.assessedLessonIds.includes(lesson.id) && !done;
+                const unlocked = canStartLesson(lesson.id, credited);
+                const isNext = lesson.id === next?.lesson.id;
                 return (
                   <Pressable
                     key={lesson.id}
@@ -196,33 +206,8 @@ export default function PathScreen() {
                       { backgroundColor: colors.background, opacity: pressed ? 0.75 : 1 },
                     ]}
                     onPress={() => {
-                      if (done) {
-                        Alert.alert(
-                          lesson.title,
-                          'What would you like to do?',
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Mark as not done',
-                              style: 'destructive',
-                              onPress: () => {
-                                setPickerNode(null);
-                                uncompleteLesson(lesson.id);
-                              },
-                            },
-                            {
-                              text: 'Repeat workout',
-                              onPress: () => {
-                                setPickerNode(null);
-                                router.push(`/workout/${lesson.id}`);
-                              },
-                            },
-                          ]
-                        );
-                      } else {
-                        setPickerNode(null);
-                        router.push(`/workout/${lesson.id}`);
-                      }
+                      setPickerNode(null);
+                      router.push(`/workout/${lesson.id}`);
                     }}
                   >
                     <View style={[styles.modalLessonNum, { backgroundColor: done ? colors.primary + '22' : colors.card }]}>
@@ -239,18 +224,18 @@ export default function PathScreen() {
                       </Text>
                       <Text style={[styles.modalLessonDetail, { color: colors.mutedForeground }]}>
                         {lesson.exercises.length} exercises
-                        {done ? ' · completed' : isNext ? ' · up next' : ''}
+                        {done ? ' · completed · repeat' : assessed ? ' · placement assessed · repeat' : isNext ? ' · current step' : unlocked ? ' · available' : ' · locked preview'}
                       </Text>
                     </View>
                     <Ionicons
-                      name={done ? 'refresh-outline' : 'play-outline'}
+                      name={done || assessed ? 'refresh-outline' : unlocked ? 'play-outline' : 'lock-closed-outline'}
                       size={18}
                       color={colors.mutedForeground}
                     />
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -352,6 +337,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
+    maxHeight: '85%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
@@ -392,7 +378,7 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    marginTop: -8,
+    marginTop: 0,
   },
   modalLessons: {
     gap: 10,

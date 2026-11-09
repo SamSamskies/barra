@@ -1,19 +1,23 @@
 export interface Exercise {
   id: string;
   name: string;
-  sets: number;
-  reps: number | string;
+  targets: number[];
+  unit: 'reps' | 'seconds' | 'attempts';
   restSeconds: number;
   description: string;
+  equipment: string[];
+  variation: string;
 }
-
 export interface Lesson {
   id: string;
   title: string;
   exercises: Exercise[];
-  xpReward?: number;
+  change: string;
+  readiness: string;
+  focus: string;
+  plateau: string;
+  requiresSuccess?: boolean;
 }
-
 export interface TrackNode {
   id: string;
   title: string;
@@ -23,406 +27,247 @@ export interface TrackNode {
   lessons: Lesson[];
 }
 
+export const RECOVERY_GUIDANCE = 'Repeat a step as often as needed. Leave recovery days between hard pulling sessions; return when recovered, not to protect a streak. There is no fixed timeline. Stop for pain or loss of control.';
+export const TRAINING_NOTICE = 'General training guidance, not personalized medical advice or coaching. Use secure, load-rated equipment with clear space above and below the bar. Warm up gently before working sets.';
+export const PLATEAU_GUIDANCE = 'Repeat this session after recovery until the targets feel controlled; do not add reps to every exercise. If a strict target is missed, use enough band or safe foot assistance for the remaining planned reps instead of adding more sets. Mark any substituted, missed or shortened set as unmet and save practice, not mastery. Keep the easy assistance work easy and the other targets fixed. Stop if fatigued or in pain; rest rather than trying to make up volume.';
+const bar = ['Secure straight pull-up bar'];
+const platform = [...bar, 'Safe stable platform at a suitable height'];
+const band = [...platform, 'Suitable resistance band, inspected and securely attached'];
+const optionalBand = [...platform, 'Suitable inspected resistance band OR a safe feet-supported setup'];
+const access = 'Use a safe stable platform to step into support and step down. Never jump blindly onto a high bar or use unstable furniture. If safe access is unavailable, do not start.';
+const definitions = {
+  hang: ['Supported Hang', 'seconds', 120, 'Keep feet on a safe stable platform, unloading enough weight for a comfortable grip. Breathe; stop before grip slips.', platform],
+  scap: ['Supported Scapular Pull-ups', 'reps', 120, 'Feet stay supported. With straight elbows, gently lower and raise the body through the shoulder blades. No forced range or shrugging through pain.', platform],
+  assisted: ['Assisted Pull-ups', 'reps', 150, 'Use a band or feet on a suitable stable platform to make every rep controlled from long arms to chin over bar. Keep the same assistance across these volume steps. If one rep is not controlled, add assistance and repeat.', optionalBand],
+  strict: ['Strict Pull-ups', 'reps', 180, 'Start still with long arms, pull chin above bar without kicking, then lower under control. Stop short of grinding; use assistance and log practice if a clean target is not available.', bar],
+  support: ['Supported Straight-Bar Support', 'seconds', 120, `${access} Keep feet supported, bar near hips, elbows straight, shoulders steady. Increase time only; keep foot assistance unchanged.`, platform],
+  freeSupport: ['Straight-Bar Support', 'seconds', 150, `${access} Lift feet only if steady: straight elbows, bar close to hips, shoulders controlled. Keep the platform ready for a controlled exit.`, platform],
+  assistedDip: ['Assisted Straight-Bar Dips', 'reps', 180, `${access} Feet on a suitable platform unload the dip. Lean slightly over the single straight bar; bend elbows only through a comfortable controlled range, then press to support. Keep assistance and range unchanged as reps grow.`, platform],
+  dip: ['Straight-Bar Dips', 'reps', 180, `${access} From steady support, lower with control through your established comfortable range and press to straight elbows. No bounce or forced depth. This is a straight-bar dip, not rings or parallel bars.`, platform],
+  assistedChest: ['Assisted Chest-to-Bar Pull-ups', 'reps', 180, 'Use enough band assistance to bring upper chest toward the bar without kicking. A feet-supported low-bar pull is an alternative if the setup permits the same controlled path. Keep assistance fixed while adding reps.', optionalBand],
+  chest: ['Chest-to-Bar Pull-ups', 'reps', 180, 'Start still and pull upper chest to bar height with control. This is a new skill, not an automatic consequence of pull-up volume. If height is lost, return to assisted practice.', bar],
+  high: ['Higher Pulls', 'reps', 240, 'Pull fast from a controlled hang, aiming slightly below the upper chest toward the lower chest. Use only height you can control; no large swing or hip-to-bar requirement. Stop when speed or height drops.', bar],
+  turnover: ['Feet-Supported Bar Turnover', 'reps', 180, `${access} Use a low straight bar with feet securely on the ground or a stable platform. Let legs carry most weight. Bring chest close, turn both wrists over together, then press to support. No one-arm chicken-wing turnover.`, ['Secure low straight bar', 'Safe stable platform if needed for foot support']],
+  muscleAssist: ['Band-Assisted Bar Muscle-ups', 'reps', 240, 'Use a suitable inspected band with safe entry from a stable platform; learn the setup before loading it. Pull close, turn both elbows over together and press into controlled support. Keep band/setup fixed for volume steps. No improvised straps or unsafe jump starts.', band],
+  attempt: ['Controlled Muscle-Up Attempts', 'attempts', 300, 'One fresh attempt per set, with full recovery. Pull close, turn both arms over together, press to support. Stop a failed attempt safely; do not keep grinding. Attempts are practice, not successful muscle-ups.', bar],
+  muscle: ['Controlled Bar Muscle-ups', 'reps', 300, 'From a controlled hang, pull close, turn both arms over together and finish in steady straight-arm support. No large kip or one-arm turnover. A failed attempt is not a rep: report practice and retry after recovery.', bar],
+} as const;
+type Movement = keyof typeof definitions;
+function exercise(key: Movement, targets: number[], variation = 'standard'): Exercise {
+  const [name, unit, restSeconds, description, equipment] = definitions[key];
+  return { id: key, name, targets, unit, restSeconds, description, equipment: [...equipment], variation };
+}
+function lesson(id: string, title: string, change: string, exercises: Exercise[], readiness = 'Complete every prescribed set with control and reserve. If targets are unmet, keep this step and repeat after recovery.', requiresSuccess = false): Lesson {
+  const focus = exercises[0]!.name;
+  const plateau = exercises.some(ex => ex.name === definitions.strict[0])
+    ? PLATEAU_GUIDANCE
+    : exercises.some(ex => ex.unit === 'attempts' || ex.name === definitions.muscle[0])
+      ? 'Keep attempts few and fully rested. If unsuccessful, save practice and repeat after recovery or revisit an earlier assisted transition lesson. Do not add repeated failed attempts to make up a missed rep. Only actual controlled unassisted reps achieve the goal.'
+      : 'Repeat the same targets after recovery. Keep assistance generous enough for control; if needed, use more support rather than forcing range or adding sets. Change assistance, range or reps one at a time. Mark missed, substituted or shortened sets as unmet and save practice; do not advance until this prescription is controlled.';
+  return { id: `bar-v2-${id}`, title, change, exercises: exercises.map((ex, i) => ({ ...ex, id: `bar-v2-${id}-e${i + 1}` })), readiness, requiresSuccess,
+    focus, plateau };
+}
+const L = lesson;
+const E = exercise;
+// Each comparable volume step adds one total rep, including a new set at one rep.
+const baseTargets = [
+  [1, 1], [2, 1], [2, 2], [2, 2, 1], [2, 2, 2],
+  [3, 2, 2], [3, 3, 2], [3, 3, 3], [4, 3, 3], [4, 4, 3],
+  [4, 4, 4], [5, 4, 4], [5, 5, 4], [5, 5, 5],
+];
+const maintenance = () => [E('strict', [2, 2])];
+const dipMaintenance = () => E('dip', [1, 1]);
+const easyHang = () => E('hang', [10]);
+const easyScap = () => E('scap', [1]);
+const assistedBackoff = () => E('assisted', [2], 'easy back-off assistance');
+function baseLesson(targets: number[], i: number): Lesson {
+  const title = [
+    'Two Separate Singles', 'One More on Set One', 'Two and Two', 'A Small Third Set', 'Three Sets of Two',
+    'Build the First Set', 'Build the Second Set', 'Three Sets of Three', 'A Controlled Fourth', 'Share the Fourth',
+    'Three Sets of Four', 'Your First Five', 'Two Sets of Five', 'Three Controlled Fives',
+  ][i]!;
+  return L(`base-${i + 1}`, title,
+    i === 0
+      ? 'Add a second strict single. Keep the two easy assisted back-off reps and short supported hang unchanged.'
+      : 'Add one total strict pull-up only. The two easy assisted reps and brief supported hold stay fixed; do not reduce assistance or increase their targets.',
+    [E('strict', targets), assistedBackoff(), i === 0 ? easyHang() : E('support', [5])],
+    'Complete all strict targets without grinding, then use generous assistance for the two easy back-off reps. Supported top holds keep feet loaded and require safe platform access. 3 × 5 opens Support & Dips; pulling continues toward 3 × 8 there, not outside the program.');
+}
+// A support/dip lesson changes only the pushing skill. A strength lesson changes
+// only one strict pull-up rep while keeping the support/dip prescription fixed.
+function supportSession(id: string, title: string, change: string, pulls: number[], skill: Movement, targets: number[], variation = 'standard'): Lesson {
+  const strict = E('strict', pulls);
+  const accessory = E(skill, targets, variation);
+  return L(id, title, change, id.startsWith('strength-') ? [strict, accessory] : [accessory, strict],
+    'Complete both prescriptions with control. On a support/dip focus, strict targets stay fixed. On a pulling focus, support/dip targets stay fixed. 3 × 8 is this roadmap’s gradual strength target, not a universal guarantee of muscle-up readiness. Repeat or use assistance and log practice if needed.');
+}
+const S = supportSession;
+function heightSession(id: string, title: string, change: string, skill: 'assistedChest' | 'chest' | 'high', targets: number[], variation = 'standard'): Lesson {
+  const result = L(id, title,
+    `${change} Strict pull-ups stay 4 / 4 and straight-bar dips stay 2 / 2; do not increase the supporting work.`,
+    [E(skill, targets, variation), E('strict', [4, 4]), E('dip', [2, 2])],
+    'Practice height first while fresh, then complete the reduced strict pulling and dip work with control. Use enough assistance for clean assisted chest-to-bar reps. Rest at least three minutes for chest-to-bar and strength sets, four minutes for faster higher pulls; extend as needed. Do not add the previous 3 × 8 workout on top.');
+  result.plateau = `If height or speed fades, stop the skill work rather than grinding or adding attempts. Keep the strict pull-ups and dips fixed, and mark any missed or substituted set as unmet. ${PLATEAU_GUIDANCE}`;
+  return result;
+}
+const H = heightSession;
 export const TRACK_NODES: TrackNode[] = [
   {
-    id: 'foundation',
-    title: 'Foundation',
-    subtitle: 'Build your pull-up base',
-    icon: 'barbell-outline',
-    nodeColor: '#4ADE80',
+    id: 'hang-control', title: 'Hang & Control', subtitle: 'Grip, shoulders, assisted reps', icon: 'hand-left-outline', nodeColor: '#4ADE80',
     lessons: [
-      {
-        id: 'foundation-1',
-        title: 'Ground Zero',
-        xpReward: 100,
-        exercises: [
-          { id: 'f1e1', name: 'Band-Assisted Pull-ups', sets: 3, reps: 5, restSeconds: 60, description: 'Loop a resistance band over the bar and step in. Focus on full range: dead hang all the way to chin above bar.' },
-          { id: 'f1e2', name: 'Negative Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: 'Jump or step to chin-over-bar. Lower yourself as slowly as possible — aim for 3–5 seconds down. This builds strength faster than positives alone.' },
-          { id: 'f1e3', name: 'Dead Hang', sets: 3, reps: '15s', restSeconds: 45, description: 'Hang with arms fully extended. Let your shoulder blades relax, then retract them slightly. Every second builds grip and shoulder stability.' },
-        ],
-      },
-      {
-        id: 'foundation-2',
-        title: 'First Rep',
-        xpReward: 100,
-        exercises: [
-          { id: 'f2e1', name: 'Pull-ups', sets: 2, reps: 2, restSeconds: 90, description: 'Quality over everything. Full dead hang to chin over bar — no half reps. Control the descent, 2 seconds down.' },
-          { id: 'f2e2', name: 'Negative Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: '5-second descent. Your muscles are strongest on the way down — use it.' },
-          { id: 'f2e3', name: 'Dead Hang', sets: 3, reps: '20s', restSeconds: 45, description: 'Hang is getting longer. Breathe steadily and stay relaxed.' },
-        ],
-      },
-      {
-        id: 'foundation-3',
-        title: 'Building Reps',
-        xpReward: 100,
-        exercises: [
-          { id: 'f3e1', name: 'Pull-ups', sets: 3, reps: 3, restSeconds: 90, description: 'Three full sets now. Rest completely between sets — quality reps only.' },
-          { id: 'f3e2', name: 'Dead Hang', sets: 3, reps: '25s', restSeconds: 45, description: 'Grip is building session by session.' },
-          { id: 'f3e3', name: 'Scapular Pull-ups', sets: 3, reps: 8, restSeconds: 60, description: 'Arms stay perfectly straight — just retract and depress your shoulder blades to lift slightly. Essential muscle-up prep from day one.' },
-        ],
-      },
-      {
-        id: 'foundation-4',
-        title: 'Steady Climb',
-        xpReward: 100,
-        exercises: [
-          { id: 'f4e1', name: 'Pull-ups', sets: 3, reps: 4, restSeconds: 90, description: 'One more rep per set. Small steps are real steps — full range and a controlled descent every time.' },
-          { id: 'f4e2', name: 'Dead Hang', sets: 3, reps: '28s', restSeconds: 45, description: 'Grip endurance creeping up. Hold steady.' },
-          { id: 'f4e3', name: 'Scapular Pull-ups', sets: 3, reps: 10, restSeconds: 60, description: 'More reps, same perfect form. No elbow bend at all.' },
-        ],
-      },
-      {
-        id: 'foundation-5',
-        title: 'Finding Volume',
-        xpReward: 100,
-        exercises: [
-          { id: 'f5e1', name: 'Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Five per set. Take what you\'ve built and push it one step further. Full range, every rep.' },
-          { id: 'f5e2', name: 'Dead Hang', sets: 3, reps: '30s', restSeconds: 45, description: '30 seconds — your grip is becoming serious.' },
-          { id: 'f5e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Mastering scapular control now pays off in every node ahead.' },
-        ],
-      },
-      {
-        id: 'foundation-6',
-        title: 'Strong Sets',
-        xpReward: 150,
-        exercises: [
-          { id: 'f6e1', name: 'Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Consistent, quality sixes across all three sets. Initiate with your lats, not your arms.' },
-          { id: 'f6e2', name: 'Chin-ups', sets: 3, reps: 4, restSeconds: 90, description: 'Underhand grip, shoulder-width. Targets biceps and lower lats differently — a fresh stimulus alongside your pull-up volume.' },
-          { id: 'f6e3', name: 'Hollow Body Hold', sets: 2, reps: '25s', restSeconds: 45, description: 'Lie on back, press lower back to floor. Arms overhead, legs raised. This core link becomes critical in the transition.' },
-        ],
-      },
-      {
-        id: 'foundation-7',
-        title: 'Strength Surge',
-        xpReward: 150,
-        exercises: [
-          { id: 'f7e1', name: 'Pull-ups', sets: 4, reps: 6, restSeconds: 90, description: 'One more set than last time — same reps, more total volume. This is how strength compounds.' },
-          { id: 'f7e2', name: 'Chin-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Continuing the chin-up build. Squeeze at the top, full hang at the bottom.' },
-          { id: 'f7e3', name: 'Scapular Pull-ups', sets: 3, reps: 12, restSeconds: 60, description: 'Engrain this movement. It is the hidden foundation of every muscle-up.' },
-        ],
-      },
-      {
-        id: 'foundation-8',
-        title: 'Power Seven',
-        xpReward: 150,
-        exercises: [
-          { id: 'f8e1', name: 'Pull-ups', sets: 4, reps: 7, restSeconds: 90, description: 'Seven per set — one step before your peak. Full control, full range. You\'re ready for this.' },
-          { id: 'f8e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand pulling strength keeps pace with your overhand volume.' },
-          { id: 'f8e3', name: 'Dead Hang', sets: 3, reps: '40s', restSeconds: 45, description: 'Almost there on the hang too. Every second is earned.' },
-        ],
-      },
-      {
-        id: 'foundation-9',
-        title: 'Max Strength',
-        xpReward: 150,
-        exercises: [
-          { id: 'f9e1', name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 90, description: 'Your pull-up peak in this phase. Full range, controlled descent on every rep. This is what you\'ve built toward.' },
-          { id: 'f9e2', name: 'Chin-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Underhand volume for balanced upper-body development.' },
-          { id: 'f9e3', name: 'Dead Hang', sets: 3, reps: '45s', restSeconds: 45, description: 'Iron grip. This transfers directly to muscle-up execution.' },
-        ],
-      },
+      L('grip-1', 'A Comfortable Grip', 'Begin with one short feet-supported hold. Assistance is expected.', [E('hang', [10])]),
+      L('grip-2', 'A Little Longer', 'Only the supported hold grows by five seconds.', [E('hang', [15])]),
+      L('scap-1', 'Find Your Shoulders', 'Introduce one supported scapular rep. Shorten the comfortable supported hang to ten seconds so the new skill does not add another full-volume exercise.', [E('scap', [1]), easyHang()]),
+      L('scap-2', 'Repeat the Control', 'Add just one supported scapular rep; the easy hang stays fixed.', [E('scap', [2]), easyHang()]),
+      L('scap-3', 'A Second Small Set', 'Add a second scapular set at one rep; keep the hang unchanged.', [E('scap', [2, 1]), easyHang()]),
+      L('assist-1', 'Your Assisted Pull', 'Introduce one full-range assisted pull. Reduce scapular practice to one easy rep; keep the short hang.', [E('assisted', [1], 'generous assistance'), easyScap(), easyHang()]),
+      L('assist-2', 'Two Assisted Reps', 'Add one assisted pull only. Keep assistance, the scapular single and the hang unchanged.', [E('assisted', [2], 'generous assistance'), easyScap(), easyHang()]),
+      L('assist-3', 'Rest and Repeat', 'Add a second assisted set at one rep. All other targets and assistance stay fixed.', [E('assisted', [2, 1], 'generous assistance'), easyScap(), easyHang()]),
+      L('assist-4', 'Balanced Assisted Sets', 'Only the second assisted set gains one rep; easy shoulder and grip work stay fixed.', [E('assisted', [2, 2], 'generous assistance'), easyScap(), easyHang()]),
+      L('assist-5', 'A Little Less Help', 'Reduce assistance one small step and cut the main work to two singles. Keep accessories fixed. Repeat at each smaller assistance level until a strict single is available.', [E('assisted', [1, 1], 'slightly reduced assistance'), easyScap(), easyHang()]),
+      L('single-1', 'One Strict Single', 'Introduce one strict rep. Replace the scapular single with two easy generously assisted back-off reps and retain the short hang; no extra hard pulling sets.', [E('strict', [1]), assistedBackoff(), easyHang()], 'A controlled unassisted single is required. Assistance builds practice but does not count as the strict target. Keep the two assisted back-off reps easy, not a second hard workout.'),
     ],
   },
   {
-    id: 'strength-base',
-    title: 'Strength Base',
-    subtitle: 'Scapular mastery',
-    icon: 'body-outline',
-    nodeColor: '#60A5FA',
+    id: 'pull-base', title: 'Pull-Up Base', subtitle: 'Build three controlled sets of five', icon: 'barbell-outline', nodeColor: '#60A5FA',
     lessons: [
-      {
-        id: 'strength-1',
-        title: 'Scapular Power',
-        xpReward: 150,
-        exercises: [
-          { id: 's1e1', name: 'Scapular Pull-ups', sets: 4, reps: 12, restSeconds: 60, description: 'Protract fully, then retract and depress. No elbow bend. Pure scapular control.' },
-          { id: 's1e2', name: 'Dead Hang', sets: 4, reps: '45s', restSeconds: 45, description: 'Serious grip and shoulder endurance. Every second is strength.' },
-          { id: 's1e3', name: 'Pull-ups', sets: 3, reps: 10, restSeconds: 90, description: 'Maintain your pull-up quality while adding new skills.' },
-        ],
-      },
-      {
-        id: 'strength-2',
-        title: 'Deep Pull',
-        xpReward: 150,
-        exercises: [
-          { id: 's2e1', name: 'Chest-to-Bar Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Pull until your chest touches the bar. This range of motion is non-negotiable for muscle-ups.' },
-          { id: 's2e2', name: 'Scapular Pull-ups', sets: 4, reps: 12, restSeconds: 60, description: 'Engrain the scapular movement. It is the foundation of the transition.' },
-          { id: 's2e3', name: 'Hanging Leg Raise', sets: 3, reps: 10, restSeconds: 60, description: 'Hip flexor and core strength for bar path control.' },
-        ],
-      },
-      {
-        id: 'strength-3',
-        title: 'Bar Control',
-        xpReward: 200,
-        exercises: [
-          { id: 's3e1', name: 'Chest-to-Bar Pull-ups', sets: 4, reps: 6, restSeconds: 90, description: 'Chest contact every rep. Be deliberate and powerful.' },
-          { id: 's3e2', name: 'Dead Hang', sets: 4, reps: '1min', restSeconds: 45, description: 'One full minute. Your grip will become a weapon.' },
-          { id: 's3e3', name: 'Hollow Body Hold', sets: 3, reps: '40s', restSeconds: 45, description: 'Strengthen the core link between your pull and your push.' },
-        ],
-      },
+      baseLesson(baseTargets[0]!, 0),
+      L('base-support', 'An Easy Top-Position Accessory', 'Keep strict singles and assisted back-off reps unchanged. Replace the hang with a five-second feet-supported top hold; learn safe access before adding pulling reps.', [E('support', [5]), E('strict', [1, 1]), assistedBackoff()]),
+      ...baseTargets.slice(1).map((targets, i) => baseLesson(targets, i + 1)),
     ],
   },
   {
-    id: 'power-up',
-    title: 'Power Up',
-    subtitle: 'Explosive force',
-    icon: 'flash-outline',
-    nodeColor: '#F59E0B',
+    id: 'support-dips', title: 'Support & Dips', subtitle: 'Alternate pushing skills and pulling strength toward 3 × 8', icon: 'body-outline', nodeColor: '#A78BFA',
     lessons: [
-      {
-        id: 'power-1',
-        title: 'Explosive Pull',
-        xpReward: 200,
-        exercises: [
-          { id: 'p1e1', name: 'Explosive Pull-ups', sets: 4, reps: 5, restSeconds: 120, description: 'Maximum velocity from dead hang. Drive elbows to hips. Each rep is an all-out effort.' },
-          { id: 'p1e2', name: 'High Pull-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Aim to get your navel to bar height. Explosiveness is the key.' },
-          { id: 'p1e3', name: 'Chest-to-Bar Pull-ups', sets: 3, reps: 5, restSeconds: 90, description: 'Maintain chest-to-bar contact. Speed and precision.' },
-        ],
-      },
-      {
-        id: 'power-2',
-        title: 'Height Seeker',
-        xpReward: 200,
-        exercises: [
-          { id: 'p2e1', name: 'High Pull-ups', sets: 4, reps: 6, restSeconds: 120, description: 'Hips to bar. Lean back slightly at the top to help generate height.' },
-          { id: 'p2e2', name: 'Explosive Pull-ups', sets: 4, reps: 6, restSeconds: 120, description: 'Focus on speed in the first third of the movement.' },
-          { id: 'p2e3', name: 'Hollow Body Swings', sets: 3, reps: '30s', restSeconds: 60, description: 'Controlled swing with rigid body tension. Builds the kip foundation.' },
-        ],
-      },
-      {
-        id: 'power-3',
-        title: 'Hip Drive',
-        xpReward: 250,
-        exercises: [
-          { id: 'p3e1', name: 'Hip Drive Drill', sets: 4, reps: 5, restSeconds: 120, description: 'From dead hang, drive hips explosively upward toward the bar. Big momentum.' },
-          { id: 'p3e2', name: 'High Pull-ups', sets: 4, reps: 7, restSeconds: 120, description: 'Higher every session. Your ceiling is rising.' },
-          { id: 'p3e3', name: 'Explosive Pull-ups', sets: 3, reps: 7, restSeconds: 90, description: 'Max speed, then controlled descent. Quality over quantity.' },
-        ],
-      },
+      S('support-1', 'Safe Access to the Top', 'Retain 5 / 5 / 5 pulling and the brief supported hold. Remove the assisted back-off work to leave room for pushing practice. Rehearse safe access.', [5, 5, 5], 'support', [5]),
+      S('support-2', 'Settle in Support', 'Only the supported hold grows to ten seconds. Strict pulling stays 5 / 5 / 5.', [5, 5, 5], 'support', [10]),
+      S('support-3', 'Balance Above the Bar', 'Remove foot assistance for one shorter five-second hold. Strict pulling stays unchanged.', [5, 5, 5], 'freeSupport', [5]),
+      S('strength-1', 'Pulling Strength: 6 / 5 / 5', 'Pulling focus: add one strict rep to set one. Repeat the same five-second support; do not increase the hold.', [6, 5, 5], 'freeSupport', [5]),
+      S('support-4', 'Steady Top Position', 'Support focus: grow the hold to ten seconds; strict pulling stays 6 / 5 / 5.', [6, 5, 5], 'freeSupport', [10]),
+      S('strength-2', 'Pulling Strength: 6 / 6 / 5', 'Pulling focus: add one rep to set two. The ten-second support is unchanged.', [6, 6, 5], 'freeSupport', [10]),
+      S('dip-a1', 'The Supported Dip', 'Pushing focus: replace the hold with one feet-assisted straight-bar dip. Pulling stays 6 / 6 / 5.', [6, 6, 5], 'assistedDip', [1]),
+      S('strength-3', 'Three Controlled Sixes', 'Pulling focus: add one rep to set three for 6 / 6 / 6. Keep the single assisted dip exactly the same.', [6, 6, 6], 'assistedDip', [1]),
+      S('dip-a2', 'Two Supported Dips', 'Pushing focus: add one assisted dip. Keep pulling at 6 / 6 / 6, assistance and dip depth unchanged.', [6, 6, 6], 'assistedDip', [2]),
+      S('strength-4', 'Pulling Strength: 7 / 6 / 6', 'Pulling focus: add one rep to set one. The two assisted dips stay fixed.', [7, 6, 6], 'assistedDip', [2]),
+      S('dip-a3', 'Repeat with Support', 'Pushing focus: introduce a second assisted dip set at one rep. Pulling stays 7 / 6 / 6.', [7, 6, 6], 'assistedDip', [2, 1]),
+      S('strength-5', 'Pulling Strength: 7 / 7 / 6', 'Pulling focus: add one rep to set two. Assisted dips stay 2 / 1.', [7, 7, 6], 'assistedDip', [2, 1]),
+      S('dip-a4', 'Even Supported Sets', 'Pushing focus: add one rep to the second assisted dip set. Pulling stays 7 / 7 / 6.', [7, 7, 6], 'assistedDip', [2, 2]),
+      S('strength-6', 'Three Controlled Sevens', 'Pulling focus: add one rep to set three. Assisted dips stay 2 / 2 with the same help.', [7, 7, 7], 'assistedDip', [2, 2]),
+      S('dip-a5', 'Less Leg Assistance', 'Pushing focus: reduce foot assistance slightly and drop dips to two singles. Pulling stays 7 / 7 / 7; do not change dip depth.', [7, 7, 7], 'assistedDip', [1, 1], 'less foot assistance'),
+      S('dip-1', 'Your First Bar Dip', 'Pushing focus: remove assistance for one controlled dip, with the same comfortable range. Pulling stays 7 / 7 / 7.', [7, 7, 7], 'dip', [1]),
+      S('strength-7', 'Pulling Strength: 8 / 7 / 7', 'Pulling focus: add one rep to set one. Keep only the same single straight-bar dip.', [8, 7, 7], 'dip', [1]),
+      S('dip-2', 'Two Clean Bar Dips', 'Pushing focus: add one straight-bar dip. Pulling stays 8 / 7 / 7.', [8, 7, 7], 'dip', [2]),
+      S('strength-8', 'Pulling Strength: 8 / 8 / 7', 'Pulling focus: add one rep to set two. Keep the two dips unchanged.', [8, 8, 7], 'dip', [2]),
+      S('dip-3', 'A Second Dip Set', 'Pushing focus: add a second dip set at one rep. Pulling stays 8 / 8 / 7.', [8, 8, 7], 'dip', [2, 1]),
+      S('strength-9', 'Three Controlled Eights', 'Pulling focus: add one rep to set three for 8 / 8 / 8. Dips stay 2 / 1. This does not automatically establish chest-to-bar height or transition readiness.', [8, 8, 8], 'dip', [2, 1]),
+      S('dip-4', 'Repeatable Bar Dips', 'Pushing focus: add one rep to the second dip set. Pulling stays 8 / 8 / 8; the next phase introduces new height at low volume.', [8, 8, 8], 'dip', [2, 2]),
     ],
   },
   {
-    id: 'archer',
-    title: 'Archer',
-    subtitle: 'One-arm strength',
-    icon: 'arrow-up-circle-outline',
-    nodeColor: '#A78BFA',
+    id: 'higher-pulls', title: 'Higher Pulls', subtitle: 'Height practice plus a reduced strength base', icon: 'flash-outline', nodeColor: '#F59E0B',
     lessons: [
-      {
-        id: 'archer-1',
-        title: 'First Arrow',
-        xpReward: 250,
-        exercises: [
-          { id: 'a1e1', name: 'Assisted Archer Pull-ups', sets: 4, reps: 5, restSeconds: 120, description: 'One arm bends while the other extends straight to the side. Use the extended arm for light assistance only.' },
-          { id: 'a1e2', name: 'Explosive Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Keep the explosive power base sharp.' },
-          { id: 'a1e3', name: 'L-sit Hang', sets: 3, reps: '20s', restSeconds: 60, description: 'Legs parallel to ground while hanging. Core and hip flexor endurance.' },
-        ],
-      },
-      {
-        id: 'archer-2',
-        title: 'True Archer',
-        xpReward: 250,
-        exercises: [
-          { id: 'a2e1', name: 'Archer Pull-ups', sets: 4, reps: 4, restSeconds: 120, description: 'Both sides equally. The extended arm is straight and provides minimal support.' },
-          { id: 'a2e2', name: 'Assisted Archer Pull-ups', sets: 2, reps: 6, restSeconds: 90, description: 'Extra volume with slight assistance for endurance.' },
-          { id: 'a2e3', name: 'High Pull-ups', sets: 3, reps: 6, restSeconds: 90, description: 'Explosive pulling power is your foundation.' },
-        ],
-      },
-      {
-        id: 'archer-3',
-        title: 'Iron Arm',
-        xpReward: 300,
-        exercises: [
-          { id: 'a3e1', name: 'Archer Pull-ups', sets: 5, reps: 5, restSeconds: 120, description: 'No assistance. Pure unilateral power on each side.' },
-          { id: 'a3e2', name: 'Slow Negatives', sets: 3, reps: 5, restSeconds: 90, description: '5-second controlled descent. Maximum time under tension.' },
-          { id: 'a3e3', name: 'High Pull-ups', sets: 3, reps: 7, restSeconds: 90, description: 'Explosive pulling fuel for muscle-up readiness.' },
-        ],
-      },
+      H('height-a1', 'Assisted Chest Height', 'Introduce three fully rested assisted chest-to-bar singles. Reduce strict pulling from 8 / 8 / 8 to 4 / 4 to make room for the new skill, and retain the earned 2 / 2 dips.', 'assistedChest', [1, 1, 1]),
+      H('height-a2', 'Build the First Height Set', 'Add one assisted chest-to-bar rep to the first set only. Keep assistance unchanged.', 'assistedChest', [2, 1, 1]),
+      H('height-a3', 'Build the Second Height Set', 'Add one assisted chest-to-bar rep to the second set only. Keep assistance unchanged.', 'assistedChest', [2, 2, 1]),
+      H('height-a4', 'Three Assisted Doubles', 'Add one assisted chest-to-bar rep to the third set only. Keep assistance unchanged.', 'assistedChest', [2, 2, 2]),
+      H('height-a5', 'Less Help at Height', 'Reduce assistance slightly and drop the skill work to two singles. Repeat at each assistance level before unassisted work.', 'assistedChest', [1, 1], 'less band assistance'),
+      H('height-1', 'One Chest-to-Bar', 'Remove assistance for just one controlled chest-to-bar rep. Return to assisted practice if height is unavailable.', 'chest', [1]),
+      H('height-2', 'Two Fresh Height Sets', 'Add a second chest-to-bar set at one rep.', 'chest', [1, 1]),
+      H('height-3', 'Three Height Singles', 'Add only one more chest-to-bar single set.', 'chest', [1, 1, 1]),
+      H('high-1', 'A Little More Height', 'Introduce faster, slightly higher pulling at one rep; lower skill volume and allow four-minute rests.', 'high', [1]),
+      H('high-2', 'Two Fast Singles', 'Add only a second higher-pull single. Preserve speed, height and full rest.', 'high', [1, 1]),
+      H('high-3', 'Three Fast Singles', 'Add only a third higher-pull single, not more reps in each set.', 'high', [1, 1, 1]),
     ],
   },
   {
-    id: 'negative',
-    title: 'Negatives',
-    subtitle: 'Transition training',
-    icon: 'trending-down-outline',
-    nodeColor: '#FB923C',
+    id: 'assisted-turnover', title: 'Assisted Transition', subtitle: 'Connect pulling to support', icon: 'shuffle-outline', nodeColor: '#F43F5E',
     lessons: [
-      {
-        id: 'negative-1',
-        title: 'First Negative',
-        xpReward: 300,
-        exercises: [
-          { id: 'n1e1', name: 'Negative Muscle-ups', sets: 3, reps: 4, restSeconds: 120, description: 'Jump or step to the top position. Lower yourself slowly through the full transition — 5 seconds down.' },
-          { id: 'n1e2', name: 'Archer Pull-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Maintain your unilateral pulling strength.' },
-          { id: 'n1e3', name: 'Dip Negatives', sets: 3, reps: 8, restSeconds: 90, description: '5-second descent on dips. Builds the push strength you need at the top of a muscle-up.' },
-        ],
-      },
-      {
-        id: 'negative-2',
-        title: 'Slow Control',
-        xpReward: 300,
-        exercises: [
-          { id: 'n2e1', name: 'Negative Muscle-ups', sets: 4, reps: 5, restSeconds: 120, description: 'Control every inch. Aim for 7 full seconds through the transition zone.' },
-          { id: 'n2e2', name: 'High Pull-ups', sets: 3, reps: 7, restSeconds: 90, description: 'The explosive pulling power must stay sharp.' },
-          { id: 'n2e3', name: 'Ring Dips', sets: 3, reps: 8, restSeconds: 90, description: 'Full range ring dips build the instability strength needed on rings.' },
-        ],
-      },
-      {
-        id: 'negative-3',
-        title: 'Gravity Defier',
-        xpReward: 350,
-        exercises: [
-          { id: 'n3e1', name: 'Negative Muscle-ups', sets: 5, reps: 5, restSeconds: 120, description: 'Maximum control. 7-10 second descent. You are writing the movement into your nervous system.' },
-          { id: 'n3e2', name: 'Archer Pull-ups', sets: 3, reps: 6, restSeconds: 120, description: 'One-arm strength for the pull phase of the muscle-up.' },
-          { id: 'n3e3', name: 'Parallel Bar Dips', sets: 4, reps: 10, restSeconds: 90, description: 'Explosive push. This is your top position lockout strength.' },
-        ],
-      },
+      L('turn-1', 'Feet-Supported Turnover', 'Replace higher pulls with one heavily feet-supported turnover. Reduce strict pull maintenance to 2/2 and dips to 1/1 to make room for transition practice.', [E('turnover', [1]), ...maintenance(), dipMaintenance()]),
+      L('turn-2', 'Two Supported Turnovers', 'Add one supported turnover; legs still carry most weight.', [E('turnover', [2]), ...maintenance(), dipMaintenance()]),
+      L('turn-3', 'Repeat the Turnover', 'Add a second turnover set at one rep; do not reduce support.', [E('turnover', [2, 1]), ...maintenance(), dipMaintenance()]),
+      L('turn-4', 'Less Help Through the Turn', 'Use slightly less leg support and cut turnover volume to two singles. Repeat as needed; no forced transition.', [E('turnover', [1, 1], 'slightly less leg support'), ...maintenance(), dipMaintenance()]),
+      L('band-1', 'Connect with a Band', 'Introduce one band-assisted full muscle-up; remove turnover drill volume. Maintenance is unchanged.', [E('muscleAssist', [1], 'generous band assistance'), ...maintenance(), dipMaintenance()]),
+      L('band-2', 'Two Assisted Singles', 'Add a second assisted muscle-up single, with the same band and setup.', [E('muscleAssist', [1, 1], 'generous band assistance'), ...maintenance(), dipMaintenance()]),
+      L('band-3', 'Three Assisted Singles', 'Add only a third assisted single. Do not reduce assistance yet.', [E('muscleAssist', [1, 1, 1], 'generous band assistance'), ...maintenance(), dipMaintenance()]),
+      L('band-4', 'A Smaller Assist', 'Reduce band assistance by one available small step and lower volume to two singles. Repeat this lesson at each smaller assistance level before unassisted attempts.', [E('muscleAssist', [1, 1], 'one smaller band assistance level'), ...maintenance(), dipMaintenance()], 'Both assisted singles must finish in controlled support. Optional technique tool ONLY after steady support: one supported slow turnover descent instead of a turnover drill, never mandatory or additional high-volume negatives.'),
     ],
   },
   {
-    id: 'transition',
-    title: 'Transition',
-    subtitle: 'The breakthrough',
-    icon: 'shuffle-outline',
-    nodeColor: '#F43F5E',
+    id: 'first-muscle-up', title: 'First Muscle-Up', subtitle: 'Fresh attempts, then clean singles', icon: 'trophy-outline', nodeColor: '#FF5722',
     lessons: [
-      {
-        id: 'transition-1',
-        title: 'Banded Assist',
-        xpReward: 350,
-        exercises: [
-          { id: 't1e1', name: 'Banded Muscle-ups', sets: 4, reps: 5, restSeconds: 120, description: 'Loop a resistance band around the bar and your hips. Focus entirely on the transition pattern — pull to push.' },
-          { id: 't1e2', name: 'Negative Muscle-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Reinforce the exact path of the transition.' },
-          { id: 't1e3', name: 'Explosive Pull-ups', sets: 3, reps: 7, restSeconds: 90, description: 'Explosiveness is what gets you over the bar.' },
-        ],
-      },
-      {
-        id: 'transition-2',
-        title: 'Wrist Turnover',
-        xpReward: 400,
-        exercises: [
-          { id: 't2e1', name: 'Banded Muscle-ups', sets: 3, reps: 6, restSeconds: 120, description: 'Reduce band assistance. The movement should feel familiar now.' },
-          { id: 't2e2', name: 'Transition Practice', sets: 5, reps: 3, restSeconds: 90, description: 'From chin-over-bar position, practice the wrist turnover into the dip position. This is the muscle-up in slow motion.' },
-          { id: 't2e3', name: 'Ring Dips', sets: 4, reps: 10, restSeconds: 90, description: 'Lock out the top position with authority.' },
-        ],
-      },
-      {
-        id: 'transition-3',
-        title: 'Unleashed',
-        xpReward: 450,
-        exercises: [
-          { id: 't3e1', name: 'Muscle-up Attempts', sets: 5, reps: 3, restSeconds: 180, description: 'Give everything. Explosive pull, fast wrist turnover, strong lockout. Today you may get your first rep.' },
-          { id: 't3e2', name: 'Banded Muscle-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Supplement with banded reps for confidence and volume.' },
-          { id: 't3e3', name: 'Negative Muscle-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Reinforce the pattern after your attempts.' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'muscle-up',
-    title: 'Muscle-up',
-    subtitle: 'The summit',
-    icon: 'trophy-outline',
-    nodeColor: '#FF5722',
-    lessons: [
-      {
-        id: 'muscleup-1',
-        title: 'First Muscle-up',
-        xpReward: 500,
-        exercises: [
-          { id: 'm1e1', name: 'Muscle-ups', sets: 3, reps: 2, restSeconds: 180, description: 'This is it. Explosive pull from dead hang, drive the transition, lock out at the top. You have earned this moment.' },
-          { id: 'm1e2', name: 'Negative Muscle-ups', sets: 3, reps: 5, restSeconds: 120, description: 'Reinforce every rep with a perfect negative.' },
-          { id: 'm1e3', name: 'Explosive Pull-ups', sets: 3, reps: 7, restSeconds: 90, description: 'Warm-up and confidence building before the main event.' },
-        ],
-      },
-      {
-        id: 'muscleup-2',
-        title: 'Muscle-up Mastery',
-        xpReward: 600,
-        exercises: [
-          { id: 'm2e1', name: 'Muscle-ups', sets: 4, reps: 5, restSeconds: 180, description: "You've arrived. String them together. Each rep cleaner and more powerful than the last." },
-          { id: 'm2e2', name: 'Weighted Pull-ups', sets: 3, reps: 6, restSeconds: 120, description: 'Extra resistance builds strength for effortless unweighted muscle-ups.' },
-          { id: 'm2e3', name: 'Ring Muscle-ups', sets: 3, reps: 3, restSeconds: 180, description: 'The ultimate progression. Rings demand superior strength, stability, and technique.' },
-        ],
-      },
+      L('attempt-1', 'Fresh Attempt Practice', 'Replace assisted work with two well-rested unassisted attempts; omit accessories to stay fresh. A controlled attempt session is not a successful muscle-up.', [E('attempt', [1, 1])], 'You may complete attempt practice if both safe attempts were taken with full recovery and control, even if unsuccessful. The goal remains unachieved. Stop early and log practice if fatigued.'),
+      L('success-1', 'Your First Controlled Muscle-Up', 'Aim for one actual unassisted rep, not more attempts. If it does not happen, log practice and retry after recovery.', [E('muscle', [1])], 'Explicitly confirm an actual unassisted rep from hang to steady straight-arm support with both arms turning over together. A failed attempt does not meet this target.', true),
+      L('success-2', 'Repeat a Clean Single', 'Repeat the same one-rep prescription on a recovered session. No volume increase is needed.', [E('muscle', [1])], 'One actual clean unassisted rep is required. Repeat or return to assisted work when needed.', true),
+      L('success-3', 'Repeatable Clean Singles', 'Add one separate single with five minutes of recovery. No linked reps or advanced variations required.', [E('muscle', [1, 1])], 'Both singles must be actual controlled unassisted muscle-ups. An attempt alone is practice.', true),
     ],
   },
 ];
 
-export const getNextLesson = (completedIds: string[]): { lesson: Lesson; node: TrackNode } | null => {
+export const ALL_LESSONS = TRACK_NODES.flatMap(node => node.lessons);
+export const GOAL_LESSON_ID = 'bar-v2-success-1';
+export const formatTargets = (ex: Exercise) => {
+  const uniform = ex.targets.every(n => n === ex.targets[0]);
+  const values = uniform ? `${ex.targets.length} × ${ex.targets[0]}` : ex.targets.join(' / ');
+  return `${values} ${ex.unit === 'seconds' ? 'sec' : ex.unit}`;
+};
+export const formatSetTarget = (ex: Exercise, set: number) => `${ex.targets[set]} ${ex.unit === 'seconds' ? 'sec' : ex.unit}`;
+export const getLessonById = (id: string) => {
   for (const node of TRACK_NODES) {
-    for (const lesson of node.lessons) {
-      if (!completedIds.includes(lesson.id)) {
-        return { lesson, node };
-      }
-    }
+    const lesson = node.lessons.find(l => l.id === id);
+    if (lesson) return { lesson, node };
   }
   return null;
 };
+export const getNextLesson = (credited: string[]) => {
+  const next = ALL_LESSONS.find(l => !credited.includes(l.id));
+  return next ? getLessonById(next.id) : null;
+};
+export const canStartLesson = (id: string, credited: string[]) => {
+  const index = ALL_LESSONS.findIndex(l => l.id === id);
+  return index >= 0 && (credited.includes(id) || ALL_LESSONS.slice(0, index).every(l => credited.includes(l.id)));
+};
+export const getNodeProgress = (id: string, credited: string[]) => {
+  const lessons = TRACK_NODES.find(n => n.id === id)?.lessons ?? [];
+  return { completed: lessons.filter(l => credited.includes(l.id)).length, total: lessons.length };
+};
+export const getNodeStatus = (id: string, credited: string[]): 'completed' | 'active' | 'locked' => {
+  const node = TRACK_NODES.find(n => n.id === id);
+  if (!node) return 'locked';
+  if (node.lessons.every(l => credited.includes(l.id))) return 'completed';
+  return node.lessons.some(l => canStartLesson(l.id, credited)) ? 'active' : 'locked';
+};
+export const getCurrentLevel = (credited: string[]) => {
+  const node = getNextLesson(credited)?.node ?? TRACK_NODES[TRACK_NODES.length - 1]!;
+  const progress = getNodeProgress(node.id, credited);
+  return { level: TRACK_NODES.indexOf(node) + 1, node, lessonsComplete: progress.completed, lessonsTotal: progress.total };
+};
 
-export const getLessonById = (id: string): { lesson: Lesson; node: TrackNode } | null => {
-  for (const node of TRACK_NODES) {
-    for (const lesson of node.lessons) {
-      if (lesson.id === id) {
-        return { lesson, node };
+export interface PlacementAnswers {
+  pullUps: number;
+  repeatableFives: boolean;
+  repeatableEights: boolean;
+  supportAndDips: boolean;
+  higherPulls: boolean;
+  assistedTransition: boolean;
+}
+export const EMPTY_PLACEMENT: PlacementAnswers = { pullUps: 0, repeatableFives: false, repeatableEights: false, supportAndDips: false, higherPulls: false, assistedTransition: false };
+export function getPlacement(answers: PlacementAnswers, earlierId?: string) {
+  // A max set never establishes repeatable sets or a different skill.
+  let id = 'bar-v2-grip-1';
+  if (answers.pullUps >= 1) id = 'bar-v2-single-1';
+  if (answers.pullUps >= 3) id = 'bar-v2-base-1';
+  if (answers.pullUps >= 5 && answers.repeatableFives) {
+    id = 'bar-v2-support-1';
+    if (answers.supportAndDips && answers.pullUps >= 8 && answers.repeatableEights) {
+      id = 'bar-v2-height-a1';
+      if (answers.higherPulls) {
+        id = 'bar-v2-turn-1';
+        if (answers.assistedTransition) id = 'bar-v2-attempt-1';
       }
     }
   }
-  return null;
-};
-
-export const getNodeProgress = (nodeId: string, completedIds: string[]): { completed: number; total: number } => {
-  const node = TRACK_NODES.find(n => n.id === nodeId);
-  if (!node) return { completed: 0, total: 0 };
-  const completed = node.lessons.filter(l => completedIds.includes(l.id)).length;
-  return { completed, total: node.lessons.length };
-};
-
-export const getNodeStatus = (nodeId: string, completedIds: string[]): 'completed' | 'active' | 'locked' => {
-  const nodeIdx = TRACK_NODES.findIndex(n => n.id === nodeId);
-  if (nodeIdx === -1) return 'locked';
-
-  const node = TRACK_NODES[nodeIdx];
-  const allCompleted = node.lessons.every(l => completedIds.includes(l.id));
-  if (allCompleted) return 'completed';
-
-  if (nodeIdx === 0) return 'active';
-  const prevNode = TRACK_NODES[nodeIdx - 1];
-  const prevComplete = prevNode.lessons.every(l => completedIds.includes(l.id));
-  if (prevComplete) return 'active';
-
-  return 'locked';
-};
-
-export const getStartingCompletedLessons = (pullUps: number): string[] => {
-  const all = (n: number) =>
-    Array.from({ length: n }, (_, i) => `foundation-${i + 1}`);
-  // Each tier skips lessons the user has clearly surpassed
-  if (pullUps <= 0) return [];           // start at Ground Zero
-  if (pullUps <= 2) return all(1);       // skip to First Rep
-  if (pullUps <= 3) return all(2);       // skip to Building Reps
-  if (pullUps <= 4) return all(3);       // skip to Steady Climb
-  if (pullUps <= 5) return all(4);       // skip to Finding Volume
-  if (pullUps <= 6) return all(5);       // skip to Strong Sets
-  if (pullUps <= 8) return all(6);       // skip to Strength Surge
-  if (pullUps <= 10) return all(7);      // skip to Power Seven
-  if (pullUps <= 12) return all(8);      // skip to Max Strength
-  return all(9);                         // Foundation complete → into Strength Base
-};
-
-export const getCurrentLevel = (completedIds: string[]): {
-  level: number;
-  node: TrackNode;
-  lessonsComplete: number;
-  lessonsTotal: number;
-} => {
-  for (let i = 0; i < TRACK_NODES.length; i++) {
-    const node = TRACK_NODES[i]!;
-    const done = node.lessons.filter(l => completedIds.includes(l.id)).length;
-    if (done < node.lessons.length) {
-      return { level: i + 1, node, lessonsComplete: done, lessonsTotal: node.lessons.length };
-    }
-  }
-  const lastNode = TRACK_NODES[TRACK_NODES.length - 1]!;
-  return { level: TRACK_NODES.length, node: lastNode, lessonsComplete: lastNode.lessons.length, lessonsTotal: lastNode.lessons.length };
-};
+  const recommendedIndex = ALL_LESSONS.findIndex(l => l.id === id);
+  const earlierIndex = ALL_LESSONS.findIndex(l => l.id === earlierId);
+  const index = earlierIndex >= 0 && earlierIndex <= recommendedIndex ? earlierIndex : recommendedIndex;
+  return { entry: getLessonById(ALL_LESSONS[index]!.id)!, assessedLessonIds: ALL_LESSONS.slice(0, index).map(l => l.id), recommendedIndex, index };
+}

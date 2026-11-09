@@ -1,35 +1,19 @@
-/**
- * Maps exercise names to a YouTube search URL for form demonstrations.
- * Using search URLs keeps links resilient — specific video IDs can be removed,
- * but a well-formed search always returns relevant results.
- */
-const q = (query: string) =>
-  `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-
+const q = (query: string) => `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+// Search links are labeled as such: examples do not replace the setup/safety cues.
 export const EXERCISE_DEMOS: Record<string, string> = {
-  'Pull-ups':                q('pull up proper form calisthenics'),
-  'Chin-ups':                q('chin up proper form tutorial'),
-  'Dead Hang':               q('dead hang exercise form benefits'),
-  'Hollow Body Hold':        q('hollow body hold tutorial calisthenics'),
-  'Scapular Pull-ups':       q('scapular pull ups tutorial form'),
-  'Chest-to-Bar Pull-ups':   q('chest to bar pull up tutorial'),
-  'Hanging Leg Raise':       q('hanging leg raise proper form'),
-  'Explosive Pull-ups':      q('explosive pull ups tutorial'),
-  'High Pull-ups':           q('high pull ups calisthenics tutorial'),
-  'Hollow Body Swings':      q('hollow body swing bar kip tutorial'),
-  'Hip Drive Drill':         q('hip drive drill bar muscle up'),
-  'Assisted Archer Pull-ups':q('archer pull up assisted tutorial'),
-  'Archer Pull-ups':         q('archer pull up tutorial calisthenics'),
-  'L-sit Hang':              q('l sit hang bar tutorial'),
-  'Slow Negatives':          q('slow negative pull up eccentric training'),
-  'Negative Muscle-ups':     q('negative muscle up tutorial'),
-  'Dip Negatives':           q('dip negatives eccentric tutorial'),
-  'Ring Dips':               q('ring dips tutorial calisthenics'),
-  'Parallel Bar Dips':       q('parallel bar dips proper form'),
-  'Banded Muscle-ups':       q('banded muscle up tutorial'),
-  'Transition Practice':     q('muscle up transition wrist turnover tutorial'),
-  'Muscle-up Attempts':      q('muscle up tutorial proper form'),
-  'Muscle-ups':              q('muscle up proper form calisthenics'),
-  'Weighted Pull-ups':       q('weighted pull ups tutorial'),
-  'Ring Muscle-ups':         q('ring muscle up tutorial'),
+  'Supported Hang': q('feet supported dead hang beginner tutorial'),
+  'Supported Scapular Pull-ups': q('feet supported scapular pull ups straight arms tutorial'),
+  'Assisted Pull-ups': q('band assisted pull up safe setup platform tutorial'),
+  'Strict Pull-ups': q('strict pull up controlled form tutorial'),
+  'Supported Straight-Bar Support': q('straight bar support hold feet assisted safe setup'),
+  'Straight-Bar Support': q('straight bar support hold safe mount platform'),
+  'Assisted Straight-Bar Dips': q('feet assisted straight bar dip beginner tutorial'),
+  'Straight-Bar Dips': q('straight bar dip controlled technique tutorial'),
+  'Assisted Chest-to-Bar Pull-ups': q('band assisted chest to bar pull up strict tutorial'),
+  'Chest-to-Bar Pull-ups': q('strict chest to bar pull up technique'),
+  'Higher Pulls': q('bar muscle up high pull technique controlled'),
+  'Feet-Supported Bar Turnover': q('low bar feet supported muscle up transition drill'),
+  'Band-Assisted Bar Muscle-ups': q('band assisted bar muscle up safe band setup tutorial'),
+  'Controlled Muscle-Up Attempts': q('controlled bar muscle up progression technique'),
+  'Controlled Bar Muscle-ups': q('controlled bar muscle up clean technique tutorial'),
 };

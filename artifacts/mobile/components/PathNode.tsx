@@ -48,8 +48,10 @@ export function PathNode({ title, icon, nodeColor, status, progress, onPress }: 
 
   return (
     <Pressable
-      onPress={!isLocked ? onPress : undefined}
-      style={({ pressed }) => [pressed && !isLocked && styles.pressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${status}, ${progress.completed} of ${progress.total} credited. Inspect lessons`}
+      style={({ pressed }) => [pressed && styles.pressed]}
     >
       <View style={styles.wrapper}>
         <Animated.View
@@ -134,6 +136,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minHeight: 8,
+    maxWidth: 112,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   dot: {
     height: 8,
@@ -142,7 +147,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     textAlign: 'center',
-    maxWidth: 88,
+    maxWidth: 112,
     lineHeight: 16,
   },
 });

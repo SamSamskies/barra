@@ -15,6 +15,7 @@ export function StreakBadge({ streak, size = 'small' }: StreakBadgeProps) {
 
   return (
     <View
+      accessibilityLabel={`${streak} day streak. Recovery days are expected; do not train hard just to keep a streak.`}
       style={[
         styles.container,
         { backgroundColor: hasStreak ? colors.card : colors.muted },

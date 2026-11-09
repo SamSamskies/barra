@@ -1,0 +1,1 @@
+- [Roadmap scope](roadmap-scope.md) — the core goal is a controlled bar muscle-up; avoid advanced-skill detours and forced progression.

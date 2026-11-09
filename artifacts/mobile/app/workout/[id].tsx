@@ -1,760 +1,165 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { Linking, Text, View } from 'react-native';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-import { getLessonById } from '@/constants/track';
+import { canStartLesson, formatSetTarget, formatTargets, getLessonById, RECOVERY_GUIDANCE, TRAINING_NOTICE } from '@/constants/track';
+import { creditedIds } from '@/lib/progression';
 import { EXERCISE_DEMOS } from '@/constants/demos';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Action, Body, Card, Heading, Page } from '@/components/TrainingUI';
 
-type Phase = 'intro' | 'work' | 'rest';
-
-const REST_EXERCISES = 90;
-
-export default function WorkoutScreen() {
+export default function WorkoutRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  return <WorkoutScreen key={id} id={id ?? ''} />;
+}
+function WorkoutScreen({ id }: { id: string }) {
   const colors = useColors();
-  const { completeLesson } = useApp();
-
-  const found = getLessonById(id ?? '');
-
-  const [phase, setPhase] = useState<Phase>('intro');
+  const { state, saveSession, uncompleteLesson } = useApp();
+  const [phase, setPhase] = useState<'intro' | 'work' | 'rest' | 'check' | 'undo'>('intro');
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [setIdx, setSetIdx] = useState(0);
-  const [restSeconds, setRestSeconds] = useState(60);
-  const [restDuration, setRestDuration] = useState(60);
+  const [restSeconds, setRestSeconds] = useState(0);
   const [skippedSets, setSkippedSets] = useState(0);
-
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Countdown timer
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
+  const sessionId = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const saving = useRef(false);
+  const found = getLessonById(id);
   useEffect(() => {
     if (phase !== 'rest') return;
-
-    timerRef.current = setInterval(() => {
-      setRestSeconds(prev => Math.max(0, prev - 1));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    const timer = setInterval(() => setRestSeconds(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
   }, [phase]);
-
-  // Advance when rest hits zero
-  useEffect(() => {
-    if (phase === 'rest' && restSeconds === 0) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setPhase('work');
-    }
-  }, [restSeconds, phase]);
-
-  if (!found) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <SafeAreaView style={styles.safe}>
-          <Text style={[styles.errorText, { color: colors.foreground }]}>Lesson not found.</Text>
-          <Pressable onPress={() => router.back()}>
-            <Text style={[styles.link, { color: colors.primary }]}>Go back</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
+  useEffect(() => { if (phase === 'rest' && restSeconds === 0) setPhase('work'); }, [phase, restSeconds]);
+  if (state.loading) return null;
+  if (!state.onboardingComplete) return <Redirect href="/onboarding" />;
+  if (!found) return <Page><Heading>Lesson not found</Heading><Body>The old roadmap has been replaced. Choose a lesson from the new path.</Body><Action title="Back to path" onPress={() => router.replace('/(tabs)')} /></Page>;
   const { lesson, node } = found;
-  const currentExercise = lesson.exercises[exerciseIdx];
-
-  let completedSets = 0;
-  for (let i = 0; i < exerciseIdx; i++) completedSets += lesson.exercises[i]!.sets;
-  completedSets += setIdx;
-  const totalSets = lesson.exercises.reduce((s, e) => s + e.sets, 0);
-
-  const startRest = (duration: number) => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setRestDuration(duration);
-    setRestSeconds(duration);
+  const credited = creditedIds(state);
+  const unlocked = canStartLesson(id, credited);
+  const mastered = state.completedLessonIds.includes(id);
+  const assessed = state.assessedLessonIds.includes(id);
+  const current = lesson.exercises[exerciseIdx]!;
+  const totalSets = lesson.exercises.reduce((sum, ex) => sum + ex.targets.length, 0);
+  const traversed = lesson.exercises.slice(0, exerciseIdx).reduce((sum, ex) => sum + ex.targets.length, 0) + setIdx;
+  const equipment = [...new Set(lesson.exercises.flatMap(ex => ex.equipment))];
+  const isAttempt = lesson.exercises.some(ex => ex.unit === 'attempts');
+  const back = () => router.replace('/(tabs)');
+  const finish = async (ready: boolean, actualSuccess: boolean) => {
+    if (saving.current || !unlocked) return;
+    saving.current = true;
+    setBusy(true);
+    try {
+      await saveSession({ id: sessionId.current, lessonId: id, skippedSets,
+        targetsMet: skippedSets === 0, ready, actualSuccess });
+      router.replace({ pathname: '/workout/complete', params: { sessionId: sessionId.current } });
+    } catch (e) {
+      setError(`Could not save your session. Please retry: ${String(e)}`);
+      setBusy(false);
+      saving.current = false;
+    }
+  };
+  const advance = (met: boolean) => {
+    if (!unlocked) return;
+    setShowHelp(false);
+    if (!met) setSkippedSets(s => s + 1);
+    const lastSet = setIdx === current.targets.length - 1;
+    const lastExercise = exerciseIdx === lesson.exercises.length - 1;
+    if (lastSet && lastExercise) { setPhase('check'); return; }
+    if (lastSet) { setExerciseIdx(i => i + 1); setSetIdx(0); }
+    else setSetIdx(i => i + 1);
+    const nextExercise = lastSet ? lesson.exercises[exerciseIdx + 1]! : current;
+    setRestSeconds(Math.max(current.restSeconds, nextExercise.restSeconds));
     setPhase('rest');
   };
-
-  const skipRest = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setRestSeconds(0);
-    setPhase('work');
+  const stopEarly = () => {
+    setSkippedSets(s => s + totalSets - traversed);
+    setPhase('check');
   };
-
-  const advance = async () => {
-    const isLastSet = setIdx >= currentExercise!.sets - 1;
-    const isLastExercise = exerciseIdx >= lesson.exercises.length - 1;
-
-    if (!isLastSet) {
-      setSetIdx(prev => prev + 1);
-    } else if (!isLastExercise) {
-      setExerciseIdx(prev => prev + 1);
-      setSetIdx(0);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await completeLesson(lesson.id);
-      router.replace({
-        pathname: '/workout/complete',
-        params: { lessonTitle: lesson.title, skippedSets: String(skippedSets) },
-      });
-    }
-  };
-
-  const handleDoneSet = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const isLastSet = setIdx >= currentExercise!.sets - 1;
-    const isLastExercise = exerciseIdx >= lesson.exercises.length - 1;
-    if (isLastSet && isLastExercise) {
-      await advance();
-    } else if (isLastSet) {
-      await advance();
-      startRest(REST_EXERCISES);
-    } else {
-      await advance();
-      startRest(currentExercise!.restSeconds);
-    }
-  };
-
-  const handleSkipSet = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSkippedSets(prev => prev + 1);
-    await advance();
-  };
-
-  const webTopPad = Platform.OS === 'web' ? 67 : 0;
-  const isFinishBtn =
-    setIdx >= (currentExercise?.sets ?? 1) - 1 &&
-    exerciseIdx >= lesson.exercises.length - 1;
-
-  // ── INTRO ──────────────────────────────────────────────
-  if (phase === 'intro') {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <SafeAreaView style={[styles.safe, { paddingTop: webTopPad }]}>
-          <View style={[styles.introHeader]}>
-            <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-              <Ionicons name="close" size={24} color={colors.foreground} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.introScroll}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.nodeChip, { backgroundColor: node.nodeColor + '22' }]}>
-              <Ionicons name={node.icon as any} size={14} color={node.nodeColor} />
-              <Text style={[styles.nodeChipText, { color: node.nodeColor }]}>
-                {node.title}
-              </Text>
-            </View>
-
-            <Text style={[styles.introTitle, { color: colors.foreground }]}>
-              {lesson.title}
-            </Text>
-
-            <View style={styles.summaryRow}>
-              {[
-                { icon: 'layers-outline' as const, label: `${lesson.exercises.length} exercises` },
-                { icon: 'repeat-outline' as const, label: `${totalSets} sets` },
-              ].map((b, i) => (
-                <View
-                  key={i}
-                  style={[styles.summaryBadge, { backgroundColor: colors.card }]}
-                >
-                  <Ionicons
-                    name={b.icon}
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={[styles.summaryText, { color: colors.foreground }]}>
-                    {b.label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.exPreviewList}>
-              {lesson.exercises.map((ex, i) => (
-                <View
-                  key={ex.id}
-                  style={[styles.exPreviewRow, { backgroundColor: colors.card }]}
-                >
-                  <Text style={[styles.exPreviewNum, { color: colors.primary }]}>
-                    {String(i + 1).padStart(2, '0')}
-                  </Text>
-                  <View style={styles.exPreviewInfo}>
-                    <Text style={[styles.exPreviewName, { color: colors.foreground }]}>
-                      {ex.name}
-                    </Text>
-                    <Text style={[styles.exPreviewDetail, { color: colors.mutedForeground }]}>
-                      {ex.sets} × {ex.reps}
-                      {typeof ex.reps === 'number' ? ' reps' : ''}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-
-          <View
-            style={[
-              styles.introCTA,
-              { borderTopColor: colors.border, backgroundColor: colors.background },
-            ]}
-          >
-            <Pressable
-              style={({ pressed }) => [
-                styles.bigBtn,
-                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-              ]}
-              onPress={() => setPhase('work')}
-            >
-              <Ionicons name="play" size={22} color={colors.primaryForeground} />
-              <Text style={[styles.bigBtnText, { color: colors.primaryForeground }]}>
-                Begin
-              </Text>
-            </Pressable>
-            <Pressable
-              style={styles.skipLink}
-              onPress={() => {
-                Alert.alert(
-                  'Too easy?',
-                  'This will mark the workout as done without completing it.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Skip',
-                      style: 'destructive',
-                      onPress: () => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        completeLesson(lesson.id);
-                        router.back();
-                      },
-                    },
-                  ]
-                );
-              }}
-            >
-              <Text style={[styles.skipLinkText, { color: colors.mutedForeground }]}>
-                Too easy — skip
-              </Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // ── REST ───────────────────────────────────────────────
-  if (phase === 'rest') {
-    const progress = restDuration > 0 ? (restDuration - restSeconds) / restDuration : 0;
-    const nextEx = lesson.exercises[exerciseIdx];
-
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <SafeAreaView style={[styles.safe, { paddingTop: webTopPad }]}>
-          <View style={styles.restContent}>
-            <Text style={[styles.restLabel, { color: colors.mutedForeground }]}>REST</Text>
-            <Text style={[styles.restTimer, { color: colors.foreground }]}>{restSeconds}</Text>
-            <Text style={[styles.restUnit, { color: colors.mutedForeground }]}>seconds</Text>
-
-            {nextEx && (
-              <View style={[styles.nextCard, { backgroundColor: colors.card }]}>
-                <Text style={[styles.nextLabel, { color: colors.mutedForeground }]}>
-                  UP NEXT
-                </Text>
-                <Text style={[styles.nextName, { color: colors.foreground }]}>
-                  {nextEx.name}
-                </Text>
-                <Text style={[styles.nextDetail, { color: colors.primary }]}>
-                  Set {setIdx + 1} of {nextEx.sets}
-                </Text>
-              </View>
-            )}
-
-            {/* Progress bar */}
-            <View style={[styles.restTrack, { backgroundColor: colors.muted }]}>
-              <View
-                style={[
-                  styles.restFill,
-                  { backgroundColor: colors.primary, width: `${progress * 100}%` },
-                ]}
-              />
-            </View>
-
-            <Pressable
-              onPress={skipRest}
-              style={[styles.skipBtn, { borderColor: colors.border }]}
-            >
-              <Text style={[styles.skipText, { color: colors.mutedForeground }]}>
-                Skip Rest
-              </Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // ── WORK ───────────────────────────────────────────────
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={[styles.safe, { paddingTop: webTopPad }]}>
-        {/* Top bar */}
-        <View style={[styles.workTopBar, { borderBottomColor: colors.border }]}>
-          <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-            <Ionicons name="close" size={22} color={colors.mutedForeground} />
-          </Pressable>
-          <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: colors.primary,
-                  width: `${(completedSets / totalSets) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-          <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
-            {completedSets}/{totalSets}
-          </Text>
-        </View>
-
-        <View style={styles.workBody}>
-          {/* Exercise title */}
-          <Text style={[styles.exIndexLabel, { color: colors.primary }]}>
-            Exercise {exerciseIdx + 1} of {lesson.exercises.length}
-          </Text>
-          <Text style={[styles.exTitle, { color: colors.foreground }]}>
-            {currentExercise?.name}
-          </Text>
-
-          {/* Set dots */}
-          <View style={styles.setDots}>
-            {Array.from({ length: currentExercise?.sets ?? 1 }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.setDot,
-                  {
-                    backgroundColor:
-                      i < setIdx
-                        ? colors.primary
-                        : i === setIdx
-                        ? colors.primary
-                        : colors.muted,
-                    opacity: i < setIdx ? 0.35 : 1,
-                    width: i === setIdx ? 22 : 10,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          <Text style={[styles.setLabel, { color: colors.mutedForeground }]}>
-            Set {setIdx + 1} of {currentExercise?.sets ?? 1}
-          </Text>
-
-          {/* Reps ring */}
-          <View
-            style={[
-              styles.repsRing,
-              { backgroundColor: colors.card, borderColor: colors.primary + '55' },
-            ]}
-          >
-            <Text style={[styles.repsNum, { color: colors.primary }]}>
-              {currentExercise?.reps}
-            </Text>
-            {typeof currentExercise?.reps === 'number' && (
-              <Text style={[styles.repsUnit, { color: colors.mutedForeground }]}>reps</Text>
-            )}
-          </View>
-
-          {/* Description */}
-          <View style={[styles.descCard, { backgroundColor: colors.card }]}>
-            <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-            <Text style={[styles.descText, { color: colors.foreground }]}>
-              {currentExercise?.description}
-            </Text>
-          </View>
-
-          {/* Watch demo */}
-          {currentExercise && EXERCISE_DEMOS[currentExercise.name] && (
-            <Pressable
-              style={({ pressed }) => [styles.demoBtn, { opacity: pressed ? 0.7 : 1 }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Linking.openURL(EXERCISE_DEMOS[currentExercise.name]!);
-              }}
-            >
-              <Ionicons name="logo-youtube" size={16} color="#FF0000" />
-              <Text style={[styles.demoBtnText, { color: colors.foreground }]}>
-                Watch demo
-              </Text>
-              <Ionicons name="open-outline" size={14} color={colors.mutedForeground} />
-            </Pressable>
-          )}
-
-          {/* Rest time */}
-          {!isFinishBtn && (
-            <View style={styles.restHint}>
-              <Ionicons name="timer-outline" size={15} color={colors.mutedForeground} />
-              <Text style={[styles.restHintText, { color: colors.mutedForeground }]}>
-                {currentExercise?.restSeconds}s rest after each set
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Done button */}
-        <View
-          style={[
-            styles.workCTA,
-            { borderTopColor: colors.border, backgroundColor: colors.background },
-          ]}
-        >
-          <Pressable
-            style={({ pressed }) => [
-              styles.bigBtn,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-            onPress={handleDoneSet}
-          >
-            <Ionicons
-              name={isFinishBtn ? 'trophy-outline' : 'checkmark'}
-              size={22}
-              color={colors.primaryForeground}
-            />
-            <Text style={[styles.bigBtnText, { color: colors.primaryForeground }]}>
-              {isFinishBtn ? 'Finish Workout' : 'Done Set'}
-            </Text>
-          </Pressable>
-
-          {!isFinishBtn && (
-            <Pressable style={styles.skipSetBtn} onPress={handleSkipSet}>
-              <Text style={[styles.skipSetBtnText, { color: colors.mutedForeground }]}>
-                Skip set
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      </SafeAreaView>
+  if (phase === 'undo') return <Page>
+    <Heading>Remove lesson credit?</Heading>
+    <Body>This removes completion and placement credit from this lesson onward so prerequisites stay consistent. All real sessions, including repeats, remain in history. Streak and session counts are unchanged.</Body>
+    {!!error && <Body>{error}</Body>}
+    <Action title="Remove credit, keep session history" disabled={busy} onPress={async () => {
+      setBusy(true);
+      try { await uncompleteLesson(id); back(); }
+      catch (e) { setError(String(e)); setBusy(false); }
+    }} />
+    <Action secondary title="Cancel" onPress={() => setPhase('intro')} />
+  </Page>;
+  if (phase === 'intro' || !unlocked) return <Page>
+    <Action secondary title="Back to path" onPress={back} />
+    <Body>{node.title} · {mastered ? 'Completed · repeat available' : assessed ? 'Assessed at placement · no session required' : unlocked ? 'Your current step' : 'Locked · preview only'}</Body>
+    <Heading>{lesson.title}</Heading>
+    <Card><Heading small>Session focus: {lesson.focus}</Heading>
+      <Body>{lesson.exercises.length > 1 ? 'A mixed session with one progression focus. Supporting work stays fixed while the focus changes.' : 'A short focused session; extra volume is not required.'}</Body>
+      <Body>{lesson.change}</Body></Card>
+    <Card><Heading small>If you cannot reach the target</Heading><Body>{lesson.plateau}</Body></Card>
+    <Card><Heading small>Before you start</Heading><Body>{lesson.readiness}</Body>
+      <Body>Equipment: {equipment.join(' · ')}</Body><Body>{TRAINING_NOTICE}</Body></Card>
+    {lesson.exercises.map(ex => <Card key={ex.id}>
+      <Heading small>{ex.name}</Heading>
+      <Body>{ex.name === lesson.focus ? 'Session focus' : 'Fixed supporting work'}</Body>
+      <Text style={{ color: colors.primary, fontSize: 20, fontFamily: 'Inter_700Bold' }}>{formatTargets(ex)}</Text>
+      <Body>Rest {ex.restSeconds} seconds between sets; extend whenever needed.</Body>
+      <Body>{ex.description}</Body>
+      {ex.variation !== 'standard' && <Body>Setup: {ex.variation}. Repeat the step before changing assistance again.</Body>}
+      <Action secondary title={`Find a demo: ${ex.name}`} onPress={() => { void Linking.openURL(EXERCISE_DEMOS[ex.name]!); }} />
+    </Card>)}
+    <Body>{RECOVERY_GUIDANCE}</Body>
+    {unlocked
+      ? <Action title={mastered || assessed ? 'Repeat this workout' : 'Begin workout'} onPress={() => setPhase('work')} />
+      : <Card><Body>Complete earlier lessons or choose a conservative entry during onboarding. Inspecting this lesson does not unlock it.</Body></Card>}
+    {(mastered || assessed) && <Action secondary title="Remove credit from this step onward" onPress={() => setPhase('undo')} />}
+  </Page>;
+  if (phase === 'check') return <Page>
+    <Heading>How did it go?</Heading>
+    <Body>This is your own readiness report, not automatic form verification. Finishing the screen does not prove mastery.</Body>
+    <Card>
+      <Body>{lesson.readiness}</Body>
+      {skippedSets > 0 ? <Body>{skippedSets} prescribed sets were skipped or unmet. This session will be recorded as practice and will not unlock a lesson.</Body>
+        : <Body>Did you complete every target with control and enough reserve to repeat the quality? It is always fine to stay here and practice.</Body>}
+    </Card>
+    {skippedSets > 0 && <Card><Heading small>For your next session</Heading><Body>{lesson.plateau}</Body></Card>}
+    {isAttempt && <Body>Safe, fully rested attempts can complete this attempt-practice lesson. Failed attempts do not count as successful muscle-ups and do not achieve the goal.</Body>}
+    {lesson.requiresSuccess && <Body>Only confirm success if you actually completed {lesson.exercises[0]!.targets.length === 1 ? 'the unassisted muscle-up' : 'both unassisted muscle-up singles'} from controlled hang to steady support. Attempts, banded reps or a one-arm turnover do not count.</Body>}
+    {!!error && <Body>{error}</Body>}
+    {skippedSets === 0 && <Action
+      title={lesson.requiresSuccess ? 'Yes — actual controlled muscle-up success' : isAttempt ? 'All prescribed attempts were safe and controlled' : 'All targets completed with control'}
+      disabled={busy} onPress={() => finish(true, !!lesson.requiresSuccess)} />}
+    <Action secondary title={busy ? 'Saving…' : 'Save as practice — stay at this step'} disabled={busy} onPress={() => finish(false, false)} />
+  </Page>;
+  if (phase === 'rest') return <Page>
+    <Body>REST · take more time if needed</Body>
+    <Text style={{ color: colors.foreground, textAlign: 'center', fontSize: 64, fontFamily: 'Inter_700Bold', marginVertical: 24 }}>{restSeconds}s</Text>
+    <Card><Heading small>Up next: {current.name}</Heading>
+      <Body>Set {setIdx + 1} of {current.targets.length} · {formatSetTarget(current, setIdx)}</Body></Card>
+    <Action title="Add 60 seconds rest" onPress={() => setRestSeconds(s => s + 60)} />
+    <Action secondary title="Skip rest" onPress={() => { setRestSeconds(0); setPhase('work'); }} />
+    <Body>Skipping rest does not invalidate the session. Start only when recovered enough for control.</Body>
+    <Action secondary title="End early and record practice" onPress={stopEarly} />
+  </Page>;
+  return <Page>
+    <Body>{lesson.title} · {traversed}/{totalSets} sets reviewed</Body>
+    <Heading>{current.name}</Heading>
+    <Body>{current.name === lesson.focus ? 'Session focus' : 'Fixed supporting work — do not increase this target'}</Body>
+    <Body>Set {setIdx + 1} of {current.targets.length}</Body>
+    <View style={{ alignSelf: 'center', width: 220, height: 220, borderRadius: 110, borderWidth: 3, borderColor: colors.primary + '55', backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center' }}>
+      <Text style={{ color: colors.primary, fontSize: 64, fontFamily: 'Inter_700Bold' }}>{current.targets[setIdx]}</Text>
+      <Body>{current.unit}</Body>
     </View>
-  );
+    <Body>All set targets: {formatTargets(current)}</Body>
+    <Card><Body>{current.description}</Body>
+      <Body>Equipment: {current.equipment.join(' · ')}</Body>
+      {current.variation !== 'standard' && <Body>Setup: {current.variation}</Body>}</Card>
+    <Action secondary title="Watch demo search" onPress={() => { void Linking.openURL(EXERCISE_DEMOS[current.name]!); }} />
+    <Body>{current.restSeconds}s recovery after this set. Keep the same assistance, range and control.</Body>
+    <Action title={current.unit === 'attempts' ? 'Controlled attempt taken' : 'Target completed with control'} onPress={() => advance(true)} />
+    <Action secondary title={showHelp ? 'Hide target help' : 'Cannot reach this target?'} onPress={() => setShowHelp(value => !value)} />
+    {showHelp && <Card><Heading small>Keep practicing, not grinding</Heading><Body>{lesson.plateau}</Body>
+      <Body>If you used assistance for a strict target, choose “Target unmet / skip this set” below. You can still finish useful practice without unlocking the next lesson.</Body></Card>}
+    <Action secondary title="Target unmet / skip this set" onPress={() => advance(false)} />
+    <Action secondary title="End early and record practice" onPress={stopEarly} />
+  </Page>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  errorText: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-    marginTop: 60,
-  },
-  link: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    textAlign: 'center',
-    marginTop: 12,
-  },
-
-  // Intro
-  introHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  closeBtn: { padding: 6 },
-  introScroll: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 20,
-  },
-  nodeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  nodeChipText: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  introTitle: {
-    fontSize: 32,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 40,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  summaryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  summaryText: {
-    fontSize: 13,
-    fontFamily: 'Inter_500Medium',
-  },
-  exPreviewList: { gap: 8 },
-  exPreviewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    gap: 16,
-  },
-  exPreviewNum: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-    width: 30,
-  },
-  exPreviewInfo: { flex: 1, gap: 2 },
-  exPreviewName: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  exPreviewDetail: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-  },
-  introCTA: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-  },
-  bigBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 18,
-    borderRadius: 16,
-  },
-  bigBtnText: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-  },
-
-  // Rest
-  restContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 24,
-  },
-  restLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 3,
-  },
-  restTimer: {
-    fontSize: 88,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 100,
-  },
-  restUnit: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    marginTop: -18,
-  },
-  nextCard: {
-    width: '100%',
-    padding: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-    gap: 4,
-  },
-  nextLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 2,
-  },
-  nextName: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-  },
-  nextDetail: {
-    fontSize: 13,
-    fontFamily: 'Inter_500Medium',
-  },
-  restTrack: {
-    height: 6,
-    borderRadius: 3,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  restFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  skipBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  skipText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-  },
-
-  // Work
-  workTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-    borderBottomWidth: 1,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  progressLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    minWidth: 30,
-    textAlign: 'right',
-  },
-  workBody: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    gap: 18,
-    alignItems: 'center',
-  },
-  exIndexLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 1,
-  },
-  exTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter_700Bold',
-    textAlign: 'center',
-  },
-  setDots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  setDot: {
-    height: 10,
-    borderRadius: 5,
-  },
-  setLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-  },
-  repsRing: {
-    width: 155,
-    height: 155,
-    borderRadius: 78,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    gap: 2,
-  },
-  repsNum: {
-    fontSize: 52,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 58,
-  },
-  repsUnit: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-  },
-  descCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
-    borderRadius: 14,
-    alignSelf: 'stretch',
-  },
-  descText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    lineHeight: 22,
-  },
-  restHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'center',
-  },
-  restHintText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-  },
-  skipLink: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  skipLinkText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-  },
-  skipSetBtn: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  skipSetBtnText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-  },
-  demoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  demoBtnText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-  },
-  workCTA: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-  },
-});

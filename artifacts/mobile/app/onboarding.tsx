@@ -1,290 +1,79 @@
 import React, { useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { router } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
+import { Redirect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-
-const FEATURES = [
-  { icon: 'map-outline' as const, text: 'Structured skill-tree progression' },
-  { icon: 'flash-outline' as const, text: 'Structured lessons with clear milestones' },
-  { icon: 'trophy-outline' as const, text: '7 milestones to the muscle-up' },
-];
-
-function getStartingPoint(pullUps: number): { label: string; skipped: number } {
-  if (pullUps <= 0)  return { label: 'Foundation — Ground Zero', skipped: 0 };
-  if (pullUps <= 2)  return { label: 'Foundation — First Rep', skipped: 1 };
-  if (pullUps <= 3)  return { label: 'Foundation — Building Reps', skipped: 2 };
-  if (pullUps <= 4)  return { label: 'Foundation — Steady Climb', skipped: 3 };
-  if (pullUps <= 5)  return { label: 'Foundation — Finding Volume', skipped: 4 };
-  if (pullUps <= 6)  return { label: 'Foundation — Strong Sets', skipped: 5 };
-  if (pullUps <= 8)  return { label: 'Foundation — Strength Surge', skipped: 6 };
-  if (pullUps <= 10) return { label: 'Foundation — Power Seven', skipped: 7 };
-  if (pullUps <= 12) return { label: 'Foundation — Max Strength', skipped: 8 };
-  return { label: 'Strength Base — Scapular Power', skipped: 9 };
-}
+import { ALL_LESSONS, EMPTY_PLACEMENT, getPlacement, TRACK_NODES, type PlacementAnswers } from '@/constants/track';
+import { Action, Card, Page, Body, Heading } from '@/components/TrainingUI';
 
 export default function Onboarding() {
   const colors = useColors();
-  const { completeOnboarding } = useApp();
+  const { state, completeOnboarding } = useApp();
   const [step, setStep] = useState(0);
-  const [pullUps, setPullUps] = useState(10);
-
-  const decrement = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setPullUps(prev => Math.max(0, prev - 1));
-  };
-
-  const increment = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setPullUps(prev => Math.min(50, prev + 1));
-  };
-
-  const handleBegin = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    await completeOnboarding(pullUps);
-    router.replace('/(tabs)');
-  };
-
-  const topPad = Platform.OS === 'web' ? 67 : 0;
-
-  if (step === 0) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <SafeAreaView style={[styles.safe, { paddingTop: topPad }]}>
-          <View style={styles.content}>
-            {/* Hero */}
-            <View style={[styles.hero, { backgroundColor: colors.card }]}>
-              <Ionicons name="barbell-outline" size={72} color={colors.primary} />
-            </View>
-
-            <View style={styles.headingBlock}>
-              <Text style={[styles.heading, { color: colors.foreground }]}>
-                Your path to the{'\n'}
-                <Text style={{ color: colors.primary }}>Muscle-up</Text>
-              </Text>
-              <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                A structured calisthenics system. Train at your own pace, hit skill milestones, and make real progress toward your goal.
-              </Text>
-            </View>
-
-            <View style={styles.features}>
-              {FEATURES.map((f, i) => (
-                <View key={i} style={styles.featureRow}>
-                  <View style={[styles.featureIcon, { backgroundColor: colors.card }]}>
-                    <Ionicons name={f.icon} size={20} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.featureText, { color: colors.foreground }]}>
-                    {f.text}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setStep(1);
-              }}
-            >
-              <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>
-                Get Started
-              </Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={[styles.safe, { paddingTop: topPad }]}>
-        <View style={styles.content}>
-          <Pressable onPress={() => setStep(0)} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
-          </Pressable>
-
-          <Text style={[styles.heading, { color: colors.foreground, textAlign: 'center' }]}>
-            How many{'\n'}
-            <Text style={{ color: colors.primary }}>pull-ups</Text> can you do?
-          </Text>
-          <Text style={[styles.sub, { color: colors.mutedForeground, textAlign: 'center' }]}>
-            We'll skip lessons you've already mastered and start you at the right place.
-          </Text>
-
-          {/* Stepper */}
-          <View style={styles.stepper}>
-            <Pressable
-              onPress={decrement}
-              style={[styles.stepBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Ionicons name="remove" size={28} color={colors.foreground} />
-            </Pressable>
-
-            <View style={styles.countBox}>
-              <Text style={[styles.countNum, { color: colors.foreground }]}>{pullUps}</Text>
-              <Text style={[styles.countLabel, { color: colors.mutedForeground }]}>reps</Text>
-            </View>
-
-            <Pressable
-              onPress={increment}
-              style={[styles.stepBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Ionicons name="add" size={28} color={colors.foreground} />
-            </Pressable>
-          </View>
-
-          {/* Placement preview */}
-          {(() => {
-            const { label, skipped } = getStartingPoint(pullUps);
-            return (
-              <View style={[styles.placementCard, { backgroundColor: colors.card, borderColor: colors.accent + '55' }]}>
-                <Ionicons name="pin-outline" size={20} color={colors.accent} />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={[styles.placementText, { color: colors.foreground }]}>
-                    Starting at: {label}
-                  </Text>
-                  {skipped > 0 && (
-                    <Text style={[styles.placementSub, { color: colors.mutedForeground }]}>
-                      {skipped} earlier {skipped === 1 ? 'lesson' : 'lessons'} skipped — you've got this covered
-                    </Text>
-                  )}
-                </View>
-              </View>
-            );
-          })()}
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-            onPress={handleBegin}
-          >
-            <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>
-              Begin Journey
-            </Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </View>
+  const [answers, setAnswers] = useState<PlacementAnswers>({ ...EMPTY_PLACEMENT });
+  const [earlierId, setEarlierId] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const placement = getPlacement(answers, earlierId);
+  const recommended = getPlacement(answers);
+  const toggle = (key: keyof Omit<PlacementAnswers, 'pullUps'>, label: string) => (
+    <Pressable testID={`placement-${key}`} accessibilityRole="checkbox" accessibilityState={{ checked: answers[key] }}
+      onPress={() => { setAnswers(prev => ({ ...prev, [key]: !prev[key] })); setEarlierId(undefined); }}
+      style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 12 }}>
+      <Ionicons name={answers[key] ? 'checkbox' : 'square-outline'} color={colors.primary} size={24} />
+      <Text style={{ flex: 1, color: colors.foreground, fontSize: 15, lineHeight: 23 }}>{label}</Text>
+    </Pressable>
   );
+  if (state.loading) return null;
+  if (state.onboardingComplete) return <Redirect href="/(tabs)" />;
+  const begin = async () => {
+    if (busy) return;
+    setBusy(true);
+    try { await completeOnboarding(answers, placement.entry.lesson.id); router.replace('/(tabs)'); }
+    catch (e) { setError(`Could not save placement: ${String(e)}`); setBusy(false); }
+  };
+  return <Page>
+    <Ionicons name="barbell-outline" size={64} color={colors.primary} />
+    <Heading>{step === 0 ? 'Your first controlled bar muscle-up' : 'Choose a conservative start'}</Heading>
+    {step === 0 ? <>
+      <Body>{TRACK_NODES.length} phases · small steps · your pace</Body>
+      <Body>Guided workouts to build your pull, push and transition.</Body>
+      <Card><Body>Repeat when needed. Rest between hard sessions.</Body></Card>
+      <Action title="Find my starting point" onPress={() => setStep(1)} />
+    </> : <>
+      <Body>How many clean strict pull-ups can you do in one set? Count full controlled reps without kicking. A max set does not prove multiple work sets or other skills.</Body>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 32 }}>
+        <Action title="−" label="Fewer pull-ups" onPress={() => { setAnswers(a => ({ ...a, pullUps: Math.max(0, a.pullUps - 1) })); setEarlierId(undefined); }} />
+        <Text style={{ color: colors.primary, fontSize: 48, fontFamily: 'Inter_700Bold' }}>{answers.pullUps}</Text>
+        <Action title="+" label="More pull-ups" onPress={() => { setAnswers(a => ({ ...a, pullUps: Math.min(50, a.pullUps + 1) })); setEarlierId(undefined); }} />
+      </View>
+      {answers.pullUps >= 5 && <Card>
+        <Body>Only select skills you have already performed recently with control. Leave unsure answers unchecked.</Body>
+        {toggle('repeatableFives', 'I can repeat 5 / 5 / 5 strict pull-ups with 3-minute rests, not just one max set.')}
+        {answers.repeatableFives && toggle('supportAndDips', 'I can safely access a straight bar, hold unassisted support for 10 seconds and perform controlled straight-bar dips at 2 / 2.')}
+        {answers.repeatableFives && answers.supportAndDips && answers.pullUps >= 8 && toggle('repeatableEights', 'I can also repeat 8 / 8 / 8 strict pull-ups with 3-minute rests, not just one set of eight.')}
+        {answers.repeatableFives && answers.supportAndDips && answers.pullUps >= 8 && answers.repeatableEights && toggle('higherPulls', 'I have performed three controlled chest-to-bar singles and three higher-pull singles with full recovery.')}
+        {answers.repeatableFives && answers.supportAndDips && answers.pullUps >= 8 && answers.repeatableEights && answers.higherPulls && toggle('assistedTransition', 'I can turn over both arms together and repeat two controlled bar muscle-up singles with light band assistance.')}
+        {answers.repeatableFives && !answers.repeatableEights && <Body>Three sets of five let you start learning support and dips. This phase also guides pulling strength upward; a dip or one max pull-up set does not skip that work.</Body>}
+      </Card>}
+      <Card>
+        <Heading small>Starting at: {placement.entry.node.title}</Heading>
+        <Body>{placement.entry.lesson.title}</Body>
+        {placement.entry.lesson.exercises.map(ex => <Body key={ex.id}>{ex.name}: {ex.targets.join(' / ')} {ex.unit}</Body>)}
+        <Body>{placement.assessedLessonIds.length} earlier lessons assessed for placement only. No workout sessions or completed-lesson awards are created.</Body>
+      </Card>
+      {recommended.index > 0 && <Card>
+        <Heading small>Prefer an earlier start?</Heading>
+        <Body>Choose any earlier lesson. It is fine to begin with grip and control.</Body>
+        {ALL_LESSONS.slice(0, recommended.index + 1).filter((l, i) =>
+          i === 0 || l.id === recommended.entry.lesson.id || TRACK_NODES.some(n => n.lessons[0]?.id === l.id)
+        ).map(l => <Action key={l.id} secondary title={`${placement.entry.lesson.id === l.id ? '✓ ' : ''}${l.title}`} onPress={() => setEarlierId(l.id)} />)}
+        {placement.index > 0 && <Action secondary title="One lesson earlier" onPress={() => setEarlierId(ALL_LESSONS[placement.index - 1]!.id)} />}
+      </Card>}
+      {!!error && <Body>{error}</Body>}
+      <Action title={busy ? 'Saving…' : 'Begin at this lesson'} onPress={begin} disabled={busy} />
+      <Action secondary title="Back" onPress={() => setStep(0)} />
+    </>}
+  </Page>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  content: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 24,
-    justifyContent: 'center',
-    gap: 28,
-  },
-  hero: {
-    alignSelf: 'center',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headingBlock: { gap: 12 },
-  heading: {
-    fontSize: 34,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 42,
-  },
-  sub: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    lineHeight: 24,
-  },
-  features: { gap: 16 },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureText: {
-    fontSize: 15,
-    fontFamily: 'Inter_500Medium',
-  },
-  primaryBtn: {
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    fontSize: 17,
-    fontFamily: 'Inter_700Bold',
-  },
-  backBtn: {
-    alignSelf: 'flex-start',
-    padding: 4,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 28,
-  },
-  stepBtn: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countBox: {
-    alignItems: 'center',
-    minWidth: 110,
-  },
-  countNum: {
-    fontSize: 64,
-    fontFamily: 'Inter_700Bold',
-    lineHeight: 72,
-  },
-  countLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    marginTop: -6,
-  },
-  placementCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-  },
-  placementText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  placementSub: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-});

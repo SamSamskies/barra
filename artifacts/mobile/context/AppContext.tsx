@@ -1,163 +1,59 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getStartingCompletedLessons } from '@/constants/track';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { type PlacementAnswers } from '@/constants/track';
+import { freshState, loadProgress, placeUser, recordSession, STORAGE_KEY, undoCredit, type ProgressState, type SessionInput } from '@/lib/progression';
 
-export interface WorkoutRecord {
-  lessonId: string;
-  completedAt: string;
-}
-
-export interface AppState {
-  onboardingComplete: boolean;
-  initialPullUps: number;
-  streak: number;
-  lastWorkoutDate: string | null;
-  completedLessonIds: string[];
-  workoutHistory: WorkoutRecord[];
-  loading: boolean;
-}
-
+export type { WorkoutRecord } from '@/lib/progression';
+export type AppState = ProgressState & { loading: boolean };
 interface AppContextType {
   state: AppState;
-  completeOnboarding: (pullUps: number) => Promise<void>;
-  completeLesson: (lessonId: string) => Promise<void>;
+  completeOnboarding: (answers: PlacementAnswers, entryId?: string) => Promise<void>;
+  saveSession: (input: SessionInput) => Promise<void>;
   uncompleteLesson: (lessonId: string) => Promise<void>;
   resetProgress: () => Promise<void>;
 }
-
-const STORAGE_KEY = '@calisthenx_v1';
-
-const defaultState: AppState = {
-  onboardingComplete: false,
-  initialPullUps: 0,
-  streak: 0,
-  lastWorkoutDate: null,
-  completedLessonIds: [],
-  workoutHistory: [],
-  loading: true,
-};
-
 const AppContext = createContext<AppContextType | null>(null);
-
-const isSameDay = (a: string, b: string) => {
-  return new Date(a).toDateString() === new Date(b).toDateString();
-};
-
-const isYesterday = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return d.toDateString() === yesterday.toDateString();
-};
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(defaultState);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const saved = await AsyncStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as Partial<AppState>;
-          setState({ ...defaultState, ...parsed, loading: false });
-        } else {
-          setState(prev => ({ ...prev, loading: false }));
-        }
-      } catch {
-        setState(prev => ({ ...prev, loading: false }));
-      }
-    })();
-  }, []);
-
-  const persist = useCallback(async (next: AppState) => {
+  const [state, setState] = useState<AppState>({ ...freshState(), loading: true });
+  const [error, setError] = useState<string | null>(null);
+  const current = useRef(state);
+  const queue = useRef(Promise.resolve());
+  const load = useCallback(async () => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ ...next, loading: false }));
-    } catch {
-      // silent
-    }
+      const saved = await loadProgress(AsyncStorage);
+      current.current = { ...saved, loading: false };
+      setState(current.current);
+      setError(null);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not load local progress.'); }
   }, []);
-
-  const completeOnboarding = useCallback(async (pullUps: number) => {
-    const startingLessons = getStartingCompletedLessons(pullUps);
-    setState(prev => {
-      const next: AppState = {
-        ...prev,
-        onboardingComplete: true,
-        initialPullUps: pullUps,
-        completedLessonIds: startingLessons,
-        loading: false,
-      };
-      persist(next);
-      return next;
+  useEffect(() => { void load(); }, [load]);
+  const update = useCallback((transform: (prev: ProgressState) => ProgressState) => {
+    const operation = queue.current.then(async () => {
+      const next = { ...transform(current.current), loading: false };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      current.current = next;
+      setState(next);
+      setError(null);
     });
-  }, [persist]);
-
-  const completeLesson = useCallback(async (lessonId: string) => {
-    setState(prev => {
-      if (prev.completedLessonIds.includes(lessonId)) return prev;
-
-      const today = new Date().toISOString();
-      let newStreak = prev.streak;
-
-      if (!prev.lastWorkoutDate) {
-        newStreak = 1;
-      } else if (isSameDay(prev.lastWorkoutDate, today)) {
-        // already worked out today
-      } else if (isYesterday(prev.lastWorkoutDate)) {
-        newStreak = prev.streak + 1;
-      } else {
-        newStreak = 1;
-      }
-
-      const record: WorkoutRecord = { lessonId, completedAt: today };
-
-      const next: AppState = {
-        ...prev,
-        completedLessonIds: [...prev.completedLessonIds, lessonId],
-        streak: newStreak,
-        lastWorkoutDate: today,
-        workoutHistory: [record, ...prev.workoutHistory].slice(0, 50),
-        loading: false,
-      };
-      persist(next);
-      return next;
-    });
-  }, [persist]);
-
-  const uncompleteLesson = useCallback(async (lessonId: string) => {
-    setState(prev => {
-      const newHistory = prev.workoutHistory.filter(r => r.lessonId !== lessonId);
-      const newLastWorkoutDate = newHistory.length > 0 ? newHistory[0]!.completedAt : null;
-      const next: AppState = {
-        ...prev,
-        completedLessonIds: prev.completedLessonIds.filter(id => id !== lessonId),
-        workoutHistory: newHistory,
-        lastWorkoutDate: newLastWorkoutDate,
-        loading: false,
-      };
-      persist(next);
-      return next;
-    });
-  }, [persist]);
-
-  const resetProgress = useCallback(async () => {
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // silent
-    }
-    setState({ ...defaultState, loading: false });
+    queue.current = operation.catch(() => {});
+    return operation;
   }, []);
-
-  return (
-    <AppContext.Provider value={{ state, completeOnboarding, completeLesson, uncompleteLesson, resetProgress }}>
-      {children}
-    </AppContext.Provider>
-  );
+  const completeOnboarding = useCallback((answers: PlacementAnswers, entryId?: string) => update(prev => placeUser(prev, answers, entryId)), [update]);
+  const saveSession = useCallback((input: SessionInput) => update(prev => recordSession(prev, input)), [update]);
+  const uncompleteLesson = useCallback((id: string) => update(prev => undoCredit(prev, id)), [update]);
+  const resetProgress = useCallback(() => update(() => freshState()), [update]);
+  if (error) {
+    return <View style={{ flex: 1, backgroundColor: '#16171D', padding: 32, justifyContent: 'center', gap: 24 }}>
+      <Text style={{ color: 'white' }}>{error}</Text>
+      <Pressable onPress={load}><Text style={{ color: '#4ADE80' }}>Retry loading</Text></Pressable>
+      <Pressable onPress={() => resetProgress().catch(e => setError(String(e)))}><Text style={{ color: '#F59E0B' }}>Clear unreadable local progress and restart</Text></Pressable>
+    </View>;
+  }
+  return <AppContext.Provider value={{ state, completeOnboarding, saveSession, uncompleteLesson, resetProgress }}>{children}</AppContext.Provider>;
 }
-
 export const useApp = () => {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used inside AppProvider');
-  return ctx;
+  const value = useContext(AppContext);
+  if (!value) throw new Error('useApp must be used inside AppProvider');
+  return value;
 };
