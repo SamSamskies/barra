@@ -265,6 +265,12 @@ importers:
       babel-preset-expo:
         specifier: ~58.0.20
         version: 58.0.20(@babel/core@7.29.7)(@babel/runtime@7.29.7)(expo@58.0.23)(react-refresh@0.18.0)
+      create-launch:
+        specifier: 0.4.1
+        version: 0.4.1
+      esbuild:
+        specifier: 0.27.3
+        version: 0.27.3
       expo:
         specifier: ~58.0.23
         version: 58.0.23(@babel/core@7.29.7)(@expo/metro-runtime@58.0.17)(expo-router@58.0.30)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
@@ -319,6 +325,9 @@ importers:
       localtunnel:
         specifier: ^2.0.2
         version: 2.0.2
+      playwright-core:
+        specifier: ^1.65.0
+        version: 1.65.0
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -2810,6 +2819,10 @@ packages:
     resolution: {integrity: sha512-tJtZBBHA6vjIAaF6EnIaq6laBBP9aq/Y3ouVJjEfoHbRBcHBAHYcMh/w8LDrk2PvIMMq8gmopa5D4V8RmbrxGw==}
     engines: {node: '>= 0.10'}
 
+  create-launch@0.4.1:
+    resolution: {integrity: sha512-SCwWUa4DYRy7InxzWyqwEn8INjyvy6SXdfti86NBVjPSd9Rm5fypdKQHRKVfnTSjXFmM0ql6zIRZGmrxzmywrw==}
+    hasBin: true
+
   cross-fetch@3.2.0:
     resolution: {integrity: sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==}
 
@@ -4306,6 +4319,11 @@ packages:
 
   pino@9.14.0:
     resolution: {integrity: sha512-8OEwKp5juEvb/MjpIc4hjqfgCNysrS94RIOMXYvpYCdm/jglrKEiAYmiumbmGhCvs+IcInsphYDFwqrjr7398w==}
+    hasBin: true
+
+  playwright-core@1.65.0:
+    resolution: {integrity: sha512-vNSKgH6YqtN7cdT/L334zo0a+YwkrpicyrHJlWWPIm/Q+Nn2SWInil01oT0mbu96U4GgoRtCYQD9CzJQgju+lA==}
+    engines: {node: '>=20'}
     hasBin: true
 
   plist@3.1.1:
@@ -8081,6 +8099,8 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
+  create-launch@0.4.1: {}
+
   cross-fetch@3.2.0:
     dependencies:
       node-fetch: 2.7.0
@@ -9585,6 +9605,8 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
       thread-stream: 3.1.0
+
+  playwright-core@1.65.0: {}
 
   plist@3.1.1:
     dependencies:

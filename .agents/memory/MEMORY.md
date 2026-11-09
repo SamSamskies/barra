@@ -1,1 +1,2 @@
 - [Roadmap scope](roadmap-scope.md) — the core goal is a controlled bar muscle-up; avoid advanced-skill detours and forced progression.
+- [Web disclosure accessibility](web-disclosure-accessibility.md) — native expanded state alone does not expose aria-expanded in this app’s React Native Web runtime.

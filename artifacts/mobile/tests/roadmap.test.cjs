@@ -101,7 +101,12 @@ test('uneven, timed, uniform and attempt targets render honestly', () => {
   assert.equal(track.formatTargets(sample([5, 4, 4], 'reps')), '5 / 4 / 4 reps');
   assert.equal(track.formatSetTarget(sample([5, 4, 4], 'reps'), 1), '4 reps');
   assert.equal(track.formatTargets(sample([5, 5], 'seconds')), '2 × 5 sec');
-  assert.equal(track.formatTargets(sample([1, 1], 'attempts')), '2 × 1 attempts');
+  assert.equal(track.formatTargets(sample([1, 1], 'attempts')), '2 × 1 attempt');
+  assert.equal(track.formatTargets(sample([1], 'reps')), '1 × 1 rep');
+  assert.equal(track.formatTargets(sample([1, 1], 'reps')), '2 × 1 rep');
+  assert.equal(track.formatSetTarget(sample([2, 1], 'reps'), 1), '1 rep');
+  assert.equal(track.formatSetTarget(sample([2, 1], 'reps'), 0), '2 reps');
+  assert.equal(track.formatSetTarget(sample([1], 'attempts'), 0), '1 attempt');
 });
 test('single max set does not prove work sets or advanced skills; earlier choice is honored', () => {
   const a = { ...track.EMPTY_PLACEMENT };

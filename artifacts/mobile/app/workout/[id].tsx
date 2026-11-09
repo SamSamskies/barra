@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-import { canStartLesson, formatSetTarget, formatTargets, getLessonById, RECOVERY_GUIDANCE, TRAINING_NOTICE } from '@/constants/track';
+import { canStartLesson, formatSetTarget, formatTargets, formatTargetUnit, getLessonById, RECOVERY_GUIDANCE, TRAINING_NOTICE } from '@/constants/track';
 import { creditedIds } from '@/lib/progression';
-import { EXERCISE_DEMOS } from '@/constants/demos';
-import { Action, Body, Card, Heading, Page } from '@/components/TrainingUI';
+import { focusSummary, movementCue, needsPlatform, PLATFORM_CUE, practiceCue, SETUP_CUE, STOP_CUE } from '@/constants/workoutCopy';
+import { ExerciseDetails } from '@/components/WorkoutDetails';
+import { Action, Body, Card, Disclosure, Heading, Page } from '@/components/TrainingUI';
 
 export default function WorkoutRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,7 +23,6 @@ function WorkoutScreen({ id }: { id: string }) {
   const [skippedSets, setSkippedSets] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [showHelp, setShowHelp] = useState(false);
   const sessionId = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const saving = useRef(false);
   const found = getLessonById(id);
@@ -62,7 +62,6 @@ function WorkoutScreen({ id }: { id: string }) {
   };
   const advance = (met: boolean) => {
     if (!unlocked) return;
-    setShowHelp(false);
     if (!met) setSkippedSets(s => s + 1);
     const lastSet = setIdx === current.targets.length - 1;
     const lastExercise = exerciseIdx === lesson.exercises.length - 1;
@@ -88,78 +87,85 @@ function WorkoutScreen({ id }: { id: string }) {
     }} />
     <Action secondary title="Cancel" onPress={() => setPhase('intro')} />
   </Page>;
-  if (phase === 'intro' || !unlocked) return <Page>
+  if (phase === 'intro' || !unlocked) return <Page compact>
     <Action secondary title="Back to path" onPress={back} />
     <Body>{node.title} · {mastered ? 'Completed · repeat available' : assessed ? 'Assessed at placement · no session required' : unlocked ? 'Your current step' : 'Locked · preview only'}</Body>
     <Heading>{lesson.title}</Heading>
-    <Card><Heading small>Session focus: {lesson.focus}</Heading>
-      <Body>{lesson.exercises.length > 1 ? 'A mixed session with one progression focus. Supporting work stays fixed while the focus changes.' : 'A short focused session; extra volume is not required.'}</Body>
-      <Body>{lesson.change}</Body></Card>
-    <Card><Heading small>If you cannot reach the target</Heading><Body>{lesson.plateau}</Body></Card>
-    <Card><Heading small>Before you start</Heading><Body>{lesson.readiness}</Body>
-      <Body>Equipment: {equipment.join(' · ')}</Body><Body>{TRAINING_NOTICE}</Body></Card>
+    <Body>{focusSummary(lesson)}</Body>
     {lesson.exercises.map(ex => <Card key={ex.id}>
       <Heading small>{ex.name}</Heading>
-      <Body>{ex.name === lesson.focus ? 'Session focus' : 'Fixed supporting work'}</Body>
-      <Text style={{ color: colors.primary, fontSize: 20, fontFamily: 'Inter_700Bold' }}>{formatTargets(ex)}</Text>
-      <Body>Rest {ex.restSeconds} seconds between sets; extend whenever needed.</Body>
-      <Body>{ex.description}</Body>
-      {ex.variation !== 'standard' && <Body>Setup: {ex.variation}. Repeat the step before changing assistance again.</Body>}
-      <Action secondary title={`Find a demo: ${ex.name}`} onPress={() => { void Linking.openURL(EXERCISE_DEMOS[ex.name]!); }} />
+      <Body>{formatTargets(ex)} · {ex.restSeconds}s rest · {ex.name === lesson.focus ? 'Focus' : 'Fixed'}</Body>
+      {ex.variation !== 'standard' && <Body>Setup: {ex.variation}</Body>}
     </Card>)}
-    <Body>{RECOVERY_GUIDANCE}</Body>
+    <Body>Equipment: {equipment.join(' · ')}</Body>
+    <Body>{SETUP_CUE} {STOP_CUE}</Body>
+    {lesson.exercises.some(needsPlatform) && <Body>{PLATFORM_CUE}</Body>}
+    {lesson.exercises.map(ex => <Body key={ex.id}>{ex.name}: {movementCue(ex)}</Body>)}
     {unlocked
       ? <Action title={mastered || assessed ? 'Repeat this workout' : 'Begin workout'} onPress={() => setPhase('work')} />
       : <Card><Body>Complete earlier lessons or choose a conservative entry during onboarding. Inspecting this lesson does not unlock it.</Body></Card>}
+    {lesson.exercises.map(ex => <ExerciseDetails key={`intro-${ex.id}`} exercise={ex} />)}
+    <Disclosure title="Targets, readiness & progression">
+      <Body>Focus: {lesson.focus}. Supporting targets stay fixed.</Body>
+      <Body>{lesson.change}</Body><Body>{lesson.readiness}</Body>
+      <Body>Rest times are minimum guides; extend whenever needed.</Body>
+    </Disclosure>
+    <Disclosure title="Target help & plateau advice"><Body>{lesson.plateau}</Body></Disclosure>
+    <Disclosure title="Training & recovery"><Body>{TRAINING_NOTICE}</Body><Body>{RECOVERY_GUIDANCE}</Body></Disclosure>
     {(mastered || assessed) && <Action secondary title="Remove credit from this step onward" onPress={() => setPhase('undo')} />}
   </Page>;
-  if (phase === 'check') return <Page>
+  if (phase === 'check') return <Page compact>
     <Heading>How did it go?</Heading>
-    <Body>This is your own readiness report, not automatic form verification. Finishing the screen does not prove mastery.</Body>
+    <Body>Your self-report, not automatic form verification. Confirm only controlled work.</Body>
     <Card>
-      <Body>{lesson.readiness}</Body>
-      {skippedSets > 0 ? <Body>{skippedSets} prescribed sets were skipped or unmet. This session will be recorded as practice and will not unlock a lesson.</Body>
-        : <Body>Did you complete every target with control and enough reserve to repeat the quality? It is always fine to stay here and practice.</Body>}
+      {skippedSets > 0 ? <Body>{skippedSets} sets skipped or unmet. Save practice; no new lesson unlocks.</Body>
+        : <Body>Every target completed with control and reserve? Repeating or saving practice is always fine.</Body>}
     </Card>
-    {skippedSets > 0 && <Card><Heading small>For your next session</Heading><Body>{lesson.plateau}</Body></Card>}
-    {isAttempt && <Body>Safe, fully rested attempts can complete this attempt-practice lesson. Failed attempts do not count as successful muscle-ups and do not achieve the goal.</Body>}
-    {lesson.requiresSuccess && <Body>Only confirm success if you actually completed {lesson.exercises[0]!.targets.length === 1 ? 'the unassisted muscle-up' : 'both unassisted muscle-up singles'} from controlled hang to steady support. Attempts, banded reps or a one-arm turnover do not count.</Body>}
+    {skippedSets > 0 && <Body>{practiceCue(lesson)}</Body>}
+    {isAttempt && <Body>Both attempts must be safe, controlled and fully rested. Failed attempts can complete attempt practice, not the muscle-up goal.</Body>}
+    {lesson.requiresSuccess && <Body>Confirm only {lesson.exercises[0]!.targets.length === 1 ? 'one actual unassisted muscle-up' : 'both actual unassisted singles'}: controlled hang to steady straight-arm support, both arms together. Failed attempts, banded reps or one-arm turnovers do not count.</Body>}
+    <Body>{STOP_CUE}</Body>
     {!!error && <Body>{error}</Body>}
     {skippedSets === 0 && <Action
       title={lesson.requiresSuccess ? 'Yes — actual controlled muscle-up success' : isAttempt ? 'All prescribed attempts were safe and controlled' : 'All targets completed with control'}
       disabled={busy} onPress={() => finish(true, !!lesson.requiresSuccess)} />}
     <Action secondary title={busy ? 'Saving…' : 'Save as practice — stay at this step'} disabled={busy} onPress={() => finish(false, false)} />
+    <Disclosure title="Readiness details"><Body>{lesson.readiness}</Body></Disclosure>
+    <Disclosure title="Practice & target help"><Body>{lesson.plateau}</Body></Disclosure>
   </Page>;
-  if (phase === 'rest') return <Page>
-    <Body>REST · take more time if needed</Body>
+  if (phase === 'rest') return <Page compact>
+    <Heading>Rest</Heading>
     <Text style={{ color: colors.foreground, textAlign: 'center', fontSize: 64, fontFamily: 'Inter_700Bold', marginVertical: 24 }}>{restSeconds}s</Text>
     <Card><Heading small>Up next: {current.name}</Heading>
       <Body>Set {setIdx + 1} of {current.targets.length} · {formatSetTarget(current, setIdx)}</Body></Card>
     <Action title="Add 60 seconds rest" onPress={() => setRestSeconds(s => s + 60)} />
     <Action secondary title="Skip rest" onPress={() => { setRestSeconds(0); setPhase('work'); }} />
-    <Body>Skipping rest does not invalidate the session. Start only when recovered enough for control.</Body>
+    <Body>Start only when recovered and in control. Skipping rest does not affect credit. {STOP_CUE}</Body>
     <Action secondary title="End early and record practice" onPress={stopEarly} />
   </Page>;
-  return <Page>
+  return <Page compact>
     <Body>{lesson.title} · {traversed}/{totalSets} sets reviewed</Body>
     <Heading>{current.name}</Heading>
-    <Body>{current.name === lesson.focus ? 'Session focus' : 'Fixed supporting work — do not increase this target'}</Body>
-    <Body>Set {setIdx + 1} of {current.targets.length}</Body>
-    <View style={{ alignSelf: 'center', width: 220, height: 220, borderRadius: 110, borderWidth: 3, borderColor: colors.primary + '55', backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: colors.primary, fontSize: 64, fontFamily: 'Inter_700Bold' }}>{current.targets[setIdx]}</Text>
-      <Body>{current.unit}</Body>
+    <Body>Set {setIdx + 1} of {current.targets.length} · {current.name === lesson.focus ? 'Focus' : 'Fixed supporting target'}</Body>
+    <View testID="current-target-circle" style={[styles.targetCircle, { borderColor: colors.primary, backgroundColor: colors.card }]}>
+      <Text style={[styles.targetNumber, { color: colors.primary }]}>{current.targets[setIdx]}</Text>
+      <Body>{formatTargetUnit(current, current.targets[setIdx]!)}</Body>
     </View>
-    <Body>All set targets: {formatTargets(current)}</Body>
-    <Card><Body>{current.description}</Body>
-      <Body>Equipment: {current.equipment.join(' · ')}</Body>
-      {current.variation !== 'standard' && <Body>Setup: {current.variation}</Body>}</Card>
-    <Action secondary title="Watch demo search" onPress={() => { void Linking.openURL(EXERCISE_DEMOS[current.name]!); }} />
-    <Body>{current.restSeconds}s recovery after this set. Keep the same assistance, range and control.</Body>
+    <Body>{movementCue(current)} {STOP_CUE}</Body>
+    {needsPlatform(current) && <Body>{PLATFORM_CUE}</Body>}
+    {current.variation !== 'standard' && <Body>Setup: {current.variation}</Body>}
     <Action title={current.unit === 'attempts' ? 'Controlled attempt taken' : 'Target completed with control'} onPress={() => advance(true)} />
-    <Action secondary title={showHelp ? 'Hide target help' : 'Cannot reach this target?'} onPress={() => setShowHelp(value => !value)} />
-    {showHelp && <Card><Heading small>Keep practicing, not grinding</Heading><Body>{lesson.plateau}</Body>
-      <Body>If you used assistance for a strict target, choose “Target unmet / skip this set” below. You can still finish useful practice without unlocking the next lesson.</Body></Card>}
     <Action secondary title="Target unmet / skip this set" onPress={() => advance(false)} />
+    <ExerciseDetails key={`work-${current.id}`} exercise={current} />
+    <Disclosure key={`help-${current.id}-${setIdx}`} title="Cannot reach this target?">
+      <Body>{practiceCue(lesson)}</Body><Body>{lesson.plateau}</Body>
+      <Body>Assistance for a strict target means “Target unmet / skip this set”. Save practice without new credit.</Body>
+    </Disclosure>
+    <Body>{current.restSeconds}s rest after this set; extend as needed.</Body>
     <Action secondary title="End early and record practice" onPress={stopEarly} />
   </Page>;
 }
+const styles = StyleSheet.create({
+  targetCircle: { alignSelf: 'center', width: 180, height: 180, borderRadius: 90, borderWidth: 3, justifyContent: 'center', alignItems: 'center' },
+  targetNumber: { fontSize: 64, fontFamily: 'Inter_700Bold' },
+});

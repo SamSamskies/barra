@@ -205,12 +205,14 @@ export const TRACK_NODES: TrackNode[] = [
 
 export const ALL_LESSONS = TRACK_NODES.flatMap(node => node.lessons);
 export const GOAL_LESSON_ID = 'bar-v2-success-1';
+export const formatTargetUnit = (ex: Pick<Exercise, 'unit'>, target: number) =>
+  ex.unit === 'seconds' ? 'sec' : target === 1 ? (ex.unit === 'reps' ? 'rep' : 'attempt') : ex.unit;
 export const formatTargets = (ex: Exercise) => {
   const uniform = ex.targets.every(n => n === ex.targets[0]);
   const values = uniform ? `${ex.targets.length} × ${ex.targets[0]}` : ex.targets.join(' / ');
-  return `${values} ${ex.unit === 'seconds' ? 'sec' : ex.unit}`;
+  return `${values} ${formatTargetUnit(ex, uniform ? ex.targets[0]! : Math.max(...ex.targets))}`;
 };
-export const formatSetTarget = (ex: Exercise, set: number) => `${ex.targets[set]} ${ex.unit === 'seconds' ? 'sec' : ex.unit}`;
+export const formatSetTarget = (ex: Exercise, set: number) => `${ex.targets[set]} ${formatTargetUnit(ex, ex.targets[set]!)}`;
 export const getLessonById = (id: string) => {
   for (const node of TRACK_NODES) {
     const lesson = node.lessons.find(l => l.id === id);

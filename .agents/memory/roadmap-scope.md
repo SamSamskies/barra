@@ -32,3 +32,15 @@ Keep the first onboarding page concise and scannable.
 **Why:** The user noted that many people do not want to read a lot before starting.
 
 **How to apply:** Use a short introduction and clear start action; keep detailed training and safety guidance in relevant workout previews.
+
+Workout coaching should be concise without simplifying the training program.
+
+**Why:** The user requested less reading and scrolling across previews, active sets, rest, readiness and results, while retaining useful coaching and unchanged progression.
+
+**How to apply:** Prioritize the current target and next action. Put full form, demos, plateau explanations and general recovery guidance behind optional details, but keep essential setup and movement-specific safety visible. Preserve the distinction between practice, controlled targets and actual muscle-up success.
+
+Keep the active-set target number in a circle, use singular “rep” for one-rep targets, and use down/up caret icons for optional-info dropdowns rather than plus/minus buttons.
+
+**Why:** The user explicitly preferred the circle and requested these wording and dropdown changes.
+
+**How to apply:** Preserve these preferences when revising workout screens.
